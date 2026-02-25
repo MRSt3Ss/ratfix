@@ -103,7 +103,7 @@ def handle_file_transfer(payload, log_type, client_id):
                     if 'GALLERY' in log_type:
                         clients[client_id]['ui_data']['gallery']['view_image'] = save_path
                     if 'CAMERA' in log_type:
-                        clients[client_id]['ui_data']['camera_image'] = save_path
+                        clients[client_id]['ui_data']['camera_image'] = f"captured_images/{secure_filename(filename)}"
             except Exception as e:
                 add_log(f"[ERROR] Saving file {filename} from {client_id}: {e}")
 
