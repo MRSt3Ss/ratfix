@@ -151,10 +151,10 @@ def index(): return render_template('index.html')
 @app.route('/api/status')
 def get_status():
     with clients_lock:
-        # Create a serializable version of the clients dict
+        print(f"DEBUG: Clients dictionary content at /api/status: {clients}") # ADDED DEBUG PRINT
         client_list = []
         for cid, client_data in clients.items():
-            info = client_data['ui_data']['device_info']
+            info = client_data['ui_data'].get('device_info', {}) # Ensure device_info is always a dict
             client_list.append({
                 'id': cid,
                 'model': info.get('Model', 'Unknown'),
