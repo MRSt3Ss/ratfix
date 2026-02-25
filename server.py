@@ -137,7 +137,7 @@ def handle_client_connection(conn, client_id):
 def tcp_listener():
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    tcp_port = int(os.environ.get("TCP_PORT", 1335))
+    tcp_port = int(os.environ.get("TCP_PORT", 8888))
     server.bind(('0.0.0.0', tcp_port))
     server.listen(5)
     add_log(f"[*] TCP Server listening on port {tcp_port}")
