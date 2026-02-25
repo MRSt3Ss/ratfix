@@ -725,9 +725,13 @@
 
             if (currentModal === 'takebackpic' || currentModal === 'takefrontpic') {
                 if (data.camera_image) {
+                    const isFront = data.camera_image.includes('front_pic');
                     body.innerHTML = `<div style="text-align:center;">
+                        <h3 style="color:var(--accent-secondary); margin-bottom:10px;">${isFront ? 'FRONT' : 'BACK'} CAMERA CAPTURED</h3>
                         <img src="/${data.camera_image}" style="max-width:100%; border-radius:18px; border:2px solid var(--accent-primary); box-shadow:0 0 20px var(--glow-primary);">
-                        <p style="margin-top:10px; color:var(--text-dim); font-size:0.8rem;">Saved to: ${data.camera_image}</p>
+                        <div style="margin-top:10px;">
+                            <a href="/${data.camera_image}" target="_blank" style="color:var(--accent-primary); text-decoration:none; font-size:0.8rem; border:1px solid; padding:4px 10px; border-radius:10px;">💾 Download Original</a>
+                        </div>
                     </div>`;
                     footer.innerHTML = `<button onclick="openModal('${currentModal}')">Jepret Lagi</button>`;
                 } else {
