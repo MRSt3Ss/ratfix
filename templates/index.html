@@ -728,12 +728,13 @@
                     const isFront = data.camera_image.includes('front_pic');
                     body.innerHTML = `<div style="text-align:center;">
                         <h3 style="color:var(--accent-secondary); margin-bottom:10px;">${isFront ? 'FRONT' : 'BACK'} CAMERA CAPTURED</h3>
-                        <img src="/${data.camera_image}" style="max-width:100%; border-radius:18px; border:2px solid var(--accent-primary); box-shadow:0 0 20px var(--glow-primary);">
-                        <div style="margin-top:10px;">
-                            <a href="/${data.camera_image}" target="_blank" style="color:var(--accent-primary); text-decoration:none; font-size:0.8rem; border:1px solid; padding:4px 10px; border-radius:10px;">💾 Download Original</a>
+                        <img src="/captured_images/${data.camera_image}" style="max-width:100%; border-radius:18px; border:2px solid var(--accent-primary); box-shadow:0 0 20px var(--glow-primary);">
+                        <div style="margin-top:10px; display:flex; gap:10px; justify-content:center;">
+                            <a href="/captured_images/${data.camera_image}" target="_blank" style="color:var(--accent-primary); text-decoration:none; font-size:0.8rem; border:1px solid; padding:6px 12px; border-radius:12px;">💾 Original</a>
+                            <button onclick="openModal('${currentModal}')" style="padding:6px 12px; font-size:0.8rem;">Jepret Lagi</button>
                         </div>
                     </div>`;
-                    footer.innerHTML = `<button onclick="openModal('${currentModal}')">Jepret Lagi</button>`;
+                    footer.innerHTML = `<button onclick="closeModal()" style="background:var(--accent-secondary); color:white;">EXIT CAMERA MODE</button>`;
                 } else {
                     body.innerHTML = `<div class="data-loader">
                         <i class="fas fa-camera fa-pulse" style="font-size:3rem;color:var(--accent-secondary)"></i>
