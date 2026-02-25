@@ -203,22 +203,41 @@ function selectDevice(clientId) {
 
 function updateDeviceList() {
     const deviceList = document.getElementById('device-list');
-    if (state.devices.length === 0) {
-        deviceList.textContent = 'No devices connected.';
-        if(selectedClientId) selectedClientId = null;
-    } else {
-        deviceList.innerHTML = state.devices.map(dev => `
-            <div class="device-item" id="device-${dev.id.replace(/[:.]/g, '-')}" onclick="selectDevice('${dev.id}')">
-                <strong>${dev.model}</strong>
-                <small>${dev.id} | ${dev.battery}</small>
-            </div>
-        `).join('');
+    const connectedDevices = state.devices || []; // Ensure it's an array
 
-        if (!selectedClientId || !state.devices.some(d => d.id === selectedClientId)) {
-            selectDevice(state.devices[0].id);
+    if (connectedDevices.length === 0) {
+        deviceList.textContent = 'No devices connected.';
+        selectedClientId = null; // Ensure selectedClientId is null if no devices
+        document.querySelectorAll('.device-item.active').forEach(el => el.classList.remove('active')); // Clear any active class
+    } else {
+        deviceList.innerHTML = connectedDevices.map(dev => {
+            const safeId = dev.id.replace(/[:.]/g, '-');
+            return `
+                <div class="device-item" id="device-${safeId}" onclick="selectDevice('${dev.id}')">
+                    <strong>${dev.model}</strong>
+                    <small>${dev.id} | ${dev.battery}</small>
+                </div>
+            `;
+        }).join('');
+
+        // Determine if selectedClientId is still valid or if a new one needs to be selected
+        const previouslySelectedDeviceExists = connectedDevices.some(d => d.id === selectedClientId);
+
+        if (!selectedClientId || !previouslySelectedDeviceExists) {
+            // Select the first device if none is selected or the previously selected device is gone
+            if (connectedDevices.length > 0) {
+                selectDevice(connectedDevices[0].id); // Auto-select the first device
+            } else {
+                selectedClientId = null; // No devices to select
+            }
         } else {
-            // Reselect to update active class
-            document.getElementById(`device-${selectedClientId.replace(/[:.]/g, '-')}`).classList.add('active');
+            // If the selected device still exists, just ensure its active class is set
+            // First, remove active from all to avoid duplicates if previous selected changed position
+            document.querySelectorAll('.device-item').forEach(el => el.classList.remove('active'));
+            const activeElement = document.getElementById(`device-${selectedClientId.replace(/[:.]/g, '-')}`);
+            if (activeElement) {
+                activeElement.classList.add('active');
+            }
         }
     }
     updateMainDashboard();
@@ -228,9 +247,10 @@ function updateMainDashboard() {
     const devInfo = document.getElementById('device-info');
     const connStatus = document.getElementById('connection-status');
 
-    if (selectedClientId && state.devices.some(d => d.id === selectedClientId)) {
-        const device = state.devices.find(d => d.id === selectedClientId);
-        devInfo.textContent = device.info_str;
+    const selectedDevice = state.devices.find(d => d.id === selectedClientId);
+
+    if (selectedClientId && selectedDevice) { // Check if selectedDevice actually exists
+        devInfo.textContent = selectedDevice.info_str;
         connStatus.textContent = 'ONLINE';
         connStatus.style.color = 'var(--border-color)';
         mainGridPanel.innerHTML = getGridButtonsHtml(true);
@@ -239,7 +259,8 @@ function updateMainDashboard() {
         connStatus.textContent = 'OFFLINE';
         connStatus.style.color = 'red';
         mainGridPanel.innerHTML = getGridButtonsHtml(false);
-        selectedClientId = null; // Ensure no client is selected if they disconnect
+        // selectedClientId is already null by updateDeviceList if no devices,
+        // or if selected one disconnects.
     }
 }
 
