@@ -64,7 +64,13 @@ def handle_incoming_data(data, client_id):
                 'GALLERY_PAGE_DATA': lambda p: client_data['gallery']['files'].extend(p.get("files")),
                 'GALLERY_NO_MORE_PAGES': handle_no_more_pages,
                 'NOTIFICATION_DATA': lambda p: client_data['notifications'].insert(0, p.get("notification")),
-                'LOCATION_SUCCESS': lambda p: client_data.update({"location_url": p.get("url")}),
+                'LOCATION_PENDING': lambda p: client_data.update({"location_status": "pending", "location_msg": p.get("status")}),
+                'LOCATION_FAIL': lambda p: client_data.update({"location_status": "error", "location_msg": p.get("error")}),
+                'LOCATION_SUCCESS': lambda p: client_data.update({
+                    "location_status": "success", 
+                    "location_url": p.get("data", {}).get("url") if isinstance(p.get("data"), dict) else p.get("url"),
+                    "location_image": p.get("data", {}).get("image_url") if isinstance(p.get("data"), dict) else None
+                }),
             }
 
             if log_type in handler_map:
