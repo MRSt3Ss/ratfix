@@ -194,15 +194,26 @@
         }
 
         async function toggleTracking(start) {
+            if (!clientId) { alert('ERROR: No Target Selected!'); return; }
             const cmd = start ? 'start_tracking' : 'stop_tracking';
+            console.log(`[DEBUG] Sending ${cmd} to ${clientId}`);
             try {
-                await fetch('/api/command', {
+                const response = await fetch('/api/command', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ cmd, client_id: clientId })
                 });
-                showTrackingUI(start);
-            } catch (e) { console.error(e); }
+                const resData = await response.json();
+                console.log('[DEBUG] Server Response:', resData);
+                if (resData.status === 'success') {
+                    showTrackingUI(start);
+                } else {
+                    alert('Command failed: ' + resData.message);
+                }
+            } catch (e) { 
+                console.error('[DEBUG] Fetch Error:', e);
+                alert('Connection Error!');
+            }
         }
 
         setInterval(updateData, 2000);
