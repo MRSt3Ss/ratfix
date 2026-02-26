@@ -86,12 +86,12 @@ def client_handler(conn, addr):
             while '\n' in buffer:
                 line, buffer = buffer.split('\n', 1)
                 if line.strip(): handle_tcp_data(line.strip(), cid)
-        except Exception as e: add_log(f"Error in client {cid}: {e}")
-        finally:
-            with lock:
-                if cid in clients: del clients[cid]
-            add_log(f"Client Disconnected: {cid}")
-            conn.close()
+    except Exception as e: add_log(f"Error in client {cid}: {e}")
+    finally:
+        with lock:
+            if cid in clients: del clients[cid]
+        add_log(f"Client Disconnected: {cid}")
+        conn.close()
 def tcp_server():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
