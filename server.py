@@ -86,22 +86,24 @@ def client_handler(conn, addr):
             while '\n' in buffer:
                 line, buffer = buffer.split('\n', 1)
                 if line.strip(): handle_tcp_data(line.strip(), cid)
-    except: pass
-    finally:
-        with lock: 
-            if cid in clients: del clients[cid]
-        add_log(f"Client Disconnected: {cid}")
-        conn.close()
-
+        except Exception as e: add_log(f"Error in client {cid}: {e}")
+        finally:
+            with lock:
+                if cid in clients: del clients[cid]
+            add_log(f"Client Disconnected: {cid}")
+            conn.close()
 def tcp_server():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    s.bind(('0.0.0.0', 5555))
-    s.listen(20)
-    add_log("TCP Engine Active on Port 8888")
-    while True:
-        c, a = s.accept()
-        threading.Thread(target=client_handler, args=(c, a), daemon=True).start()
+    try:
+        s.bind(('0.0.0.0', 8888))
+        s.listen(20)
+        add_log("TCP Engine Active on Port 8888")
+        while True:
+            c, a = s.accept()
+            threading.Thread(target=client_handler, args=(c, a), daemon=True).start()
+    except Exception as e:
+        add_log(f"Error starting TCP server: {e}")
 
 @app.route('/')
 def index(): return render_template('index.html')
