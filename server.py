@@ -229,6 +229,7 @@ def send_command_route():
         if cmd == 'stop_tracking':
             client_data['tracking_active'] = False
             client_data['location_status'] = 'Stopped'
+            client_data['location_url'] = None # Clear on stop
 
     try:
         add_log(f"[SEND] to {client_id}: {cmd}")
