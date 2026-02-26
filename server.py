@@ -217,6 +217,9 @@ def send_command_route():
         if cmd == 'get_location': 
             client_data['location_url'] = None
             client_data['camera_image'] = None
+            client_data['location_status'] = 'requesting'
+            client_data['location_image'] = None
+            client_data['location_msg'] = 'Sending command to agent...'
 
     try:
         add_log(f"[SEND] to {client_id}: {cmd}")
