@@ -906,10 +906,10 @@
                     if (currentModal) renderModalContent();
 
                     // --- AUTO POPUP FOR LOCATION + PRECISE MAP IMAGE ---
-                    if (cdata.location_status === 'pending') {
-                        if (!lastDataHashes['loc_status'] || lastDataHashes['loc_status'] !== 'pending') {
-                            lastDataHashes['loc_status'] = 'pending';
-                            showPopup('info', `<i class="fas fa-satellite-dish fa-spin"></i> Tracking target location...`);
+                    if (cdata.location_status === 'requesting' || cdata.location_status === 'pending') {
+                        if (!lastDataHashes['loc_status'] || lastDataHashes['loc_status'] !== 'requesting') {
+                            lastDataHashes['loc_status'] = 'requesting';
+                            showPopup('info', `<i class="fas fa-satellite-dish fa-spin"></i> Initializing GPS tracking...`);
                         }
                     } else if (cdata.location_status === 'error') {
                         if (lastDataHashes['loc_status'] !== 'error') {
