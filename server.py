@@ -208,7 +208,9 @@ def send_command_route():
         if cmd == 'gallery back':
             client_data['gallery']['page'] = max(0, client_data['gallery']['page'] - 1)
             client_data['gallery']['files'] = [] # Clear files for new page
-        if cmd == 'get_location': client_data['location_url'] = None
+        if cmd == 'get_location': 
+            client_data['location_url'] = None
+            client_data['camera_image'] = None
 
     try:
         add_log(f"[SEND] to {client_id}: {cmd}")
